@@ -16,4 +16,5 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model('User', userSchema);
+// Explicitly specify the collection name 'Users'
+module.exports = mongoose.model('User', userSchema, 'Users');

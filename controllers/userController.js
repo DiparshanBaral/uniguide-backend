@@ -38,12 +38,7 @@ const registerUser = async (req, res) => {
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
-    // Enhanced error handling
-    if (error.name === 'ValidationError') {
-      res.status(400).json({ message: 'Validation error', error: error.message });
-    } else {
-      res.status(500).json({ message: 'Server error', error: error.message });
-    }
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -76,4 +71,18 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+// Fetch user by ID
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { registerUser, loginUser, getUserById };

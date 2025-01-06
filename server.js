@@ -3,14 +3,19 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 
+// Connect to MongoDB
 connectDB();
 
 const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(cors());
 
+// Import routes
 const userRoutes = require('./routes/userRoutes');
-// Routes
+
+// Use routes
 app.use('/users', userRoutes);
 
 app.get('/', (req, res) => {
