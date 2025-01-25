@@ -1,15 +1,16 @@
-const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { Student, Mentor } = require('../models/userModel');
 
 // Register a new user
 const registerUser = async (req, res) => {
   const { firstname, lastname, email, password, role } = req.body;
 
   try {
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check if user already exists in either collection
+    const existingStudent = await Student.findOne({ email });
+    const existingMentor = await Mentor.findOne({ email });
+    if (existingStudent || existingMentor) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
@@ -17,28 +18,39 @@ const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create new user
-    const newUser = await User.create({
-      firstname,
-      lastname,
-      email,
-      password: hashedPassword,
-      role,
-    });
-
-    if (newUser) {
-      res.status(201).json({
-        message: 'User created successfully',
-        _id: newUser.id,
-        firstname: newUser.firstname,
-        lastname: newUser.lastname,
-        email: newUser.email,
-        role: newUser.role,
+    // Create new user based on role
+    let newUser;
+    if (role === 'student') {
+      newUser = await Student.create({
+        firstname,
+        lastname,
+        email,
+        password: hashedPassword,
+        role,
+      });
+    } else if (role === 'mentor') {
+      newUser = await Mentor.create({
+        firstname,
+        lastname,
+        email,
+        password: hashedPassword,
+        role,
       });
     } else {
-      res.status(400).json({ message: 'Invalid user data' });
+      return res.status(400).json({ message: 'Invalid role' });
     }
+
+    // Return success response
+    res.status(201).json({
+      message: 'User created successfully',
+      _id: newUser.id,
+      firstname: newUser.firstname,
+      lastname: newUser.lastname,
+      email: newUser.email,
+      role: newUser.role,
+    });
   } catch (error) {
+    console.error('Error during registration:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -48,34 +60,41 @@ const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
-
-    if (user) {
-      const matchPassword = await bcrypt.compare(password, user.password);
-      if (matchPassword) {
-        // Generate a JWT token
-        const token = jwt.sign(
-          { id: user._id }, // Payload
-          process.env.JWT_SECRET, // Secret key
-          { expiresIn: '30d' } // Token expiration
-        );
-
-        res.json({
-          message: `Welcome back, ${user.firstname}!`,
-          _id: user._id,
-          firstname: user.firstname,
-          lastname: user.lastname,
-          email: user.email,
-          role: user.role,
-          token, // Include the token in the response
-        });
-      } else {
-        res.status(401).json({ message: 'Invalid email or password' });
-      }
-    } else {
-      res.status(401).json({ message: 'User not found' });
+    // Check both collections for the user
+    let user = await Student.findOne({ email });
+    if (!user) {
+      user = await Mentor.findOne({ email });
     }
+
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    // Compare passwords
+    const matchPassword = await bcrypt.compare(password, user.password);
+    if (!matchPassword) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign(
+      { id: user._id, role: user.role }, // Include role in the payload
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    // Return success response
+    res.json({
+      message: `Welcome back, ${user.firstname}!`,
+      _id: user._id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+      role: user.role,
+      token,
+    });
   } catch (error) {
+    console.error('Error during login:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -83,12 +102,18 @@ const loginUser = async (req, res) => {
 // Fetch user by ID
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(404).json({ message: 'User not found' });
+    let user;
+    if (req.user.role === 'student') {
+      user = await Student.findById(req.params.id).select('-password');
+    } else if (req.user.role === 'mentor') {
+      user = await Mentor.findById(req.params.id).select('-password');
     }
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -99,8 +124,12 @@ const updateUser = async (req, res) => {
   const { firstname, lastname, email } = req.body;
 
   try {
-    // Find the user by ID
-    const user = await User.findById(req.params.id);
+    let user;
+    if (req.user.role === 'student') {
+      user = await Student.findById(req.params.id);
+    } else if (req.user.role === 'mentor') {
+      user = await Mentor.findById(req.params.id);
+    }
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -114,6 +143,7 @@ const updateUser = async (req, res) => {
     // Save the updated user
     const updatedUser = await user.save();
 
+    // Return success response
     res.status(200).json({
       message: 'Profile updated successfully',
       _id: updatedUser._id,
@@ -123,8 +153,9 @@ const updateUser = async (req, res) => {
       role: updatedUser.role,
     });
   } catch (error) {
+    console.error('Error updating user:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-module.exports = { registerUser, loginUser, getUserById, updateUser }; // Export the new function
+module.exports = { registerUser, loginUser, getUserById, updateUser };

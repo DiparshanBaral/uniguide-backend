@@ -16,5 +16,10 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Explicitly specify the collection name 'Users'
-module.exports = mongoose.model('User', userSchema, 'Users');
+// Explicitly specify the database and collection names
+const db = mongoose.connection.useDb("Users");
+
+const Student = db.model('Student', userSchema, 'Students');
+const Mentor = db.model('Mentor', userSchema, 'Mentors');
+
+module.exports = { Student, Mentor };
