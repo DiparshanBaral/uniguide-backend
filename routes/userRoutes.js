@@ -3,7 +3,7 @@ const {
   registerUser,
   loginUser,
   getUserById,
-  updateUser, // Import the new function
+  updateUser,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
@@ -14,10 +14,10 @@ router.post('/signup', registerUser);
 // User Login
 router.post('/login', loginUser);
 
-// Get User by ID (protected route example)
+// Get User by ID (protected route)
 router.get('/:id', protect, getUserById);
 
 // Update User by ID (protected route)
-router.put('/:id', protect, updateUser); // Add this new route
+router.put('/:id', protect, updateUser);
 
 module.exports = router;
