@@ -14,9 +14,11 @@ app.use(cors());
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes'); // Import admin routes
 
 // Use routes
 app.use('/users', userRoutes);
+app.use('/admin', adminRoutes); // Add admin routes
 
 app.get('/', (req, res) => {
   res.send('UNIGUIDE API is running....');

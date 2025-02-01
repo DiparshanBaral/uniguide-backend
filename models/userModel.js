@@ -16,10 +16,19 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+const adminSchema = new mongoose.Schema(
+  {
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+  },
+  { timestamps: true },
+);
+
 // Explicitly specify the database and collection names
 const db = mongoose.connection.useDb("Users");
 
 const Student = db.model('Student', userSchema, 'Students');
 const Mentor = db.model('Mentor', userSchema, 'Mentors');
+const Admin = db.model('Admin', adminSchema, 'Admin');
 
-module.exports = { Student, Mentor };
+module.exports = { Student, Mentor, Admin };
