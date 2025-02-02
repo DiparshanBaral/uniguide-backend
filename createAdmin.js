@@ -10,12 +10,12 @@ connectDB();
 const createAdmin = async () => {
   try {
     // Hash the password (ensure you change this if needed)
-    const hashedPassword = await bcrypt.hash("123456789", 10);  // You can change "admin123" to any password you prefer
+    const hashedPassword = await bcrypt.hash("123456789", 10); 
 
     // Create the admin user
     const admin = new Admin({
-      username: "admin",  // Set a username for the admin (you can change this if needed)
-      password: hashedPassword,  // Store the hashed password
+      email: "admin@gmail.com",  
+      password: hashedPassword, 
     });
 
     // Save the admin user to the database

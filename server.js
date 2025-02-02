@@ -14,7 +14,7 @@ app.use(cors());
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
-const adminRoutes = require('./routes/adminRoutes'); // Import admin routes
+const adminRoutes = require('./routes/adminRoutes');
 
 // Use routes
 app.use('/users', userRoutes);

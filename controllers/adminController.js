@@ -2,14 +2,14 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Admin } = require("../models/userModel");
 
-const SECRET_KEY = "your_secret_key"; // Replace with a secure key
+const SECRET_KEY = "UniGuideJWT";
 
 // Admin Login
 const loginAdmin = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   try {
-    const admin = await Admin.findOne({ username });
+    const admin = await Admin.findOne({ email });
 
     if (!admin) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -22,7 +22,7 @@ const loginAdmin = async (req, res) => {
     }
 
     // Generate JWT token
-    const token = jwt.sign({ id: admin._id, role: "admin" }, SECRET_KEY, { expiresIn: "2h" });
+    const token = jwt.sign({ id: admin._id, role: "admin" }, SECRET_KEY, { expiresIn: "12h" });
 
     res.json({ message: "Login successful", token });
   } catch (error) {
