@@ -103,10 +103,20 @@ const loginUser = async (req, res) => {
 const getUserById = async (req, res) => {
   try {
     let user;
-    if (req.user.role === 'student') {
-      user = await Student.findById(req.params.id).select('-password');
-    } else if (req.user.role === 'mentor') {
-      user = await Mentor.findById(req.params.id).select('-password');
+
+    // If user is authenticated (i.e., req.user is populated by protect middleware)
+    if (req.user) {
+      if (req.user.role === 'student') {
+        user = await Student.findById(req.params.id).select('-password');
+      } else if (req.user.role === 'mentor') {
+        user = await Mentor.findById(req.params.id).select('-password');
+      }
+    } else {
+      // If no token provided, fallback to public route, and try finding user in the User collection
+      user = await Student.findById(req.params.id).select('-password');  // Default to student model
+      if (!user) {
+        user = await Mentor.findById(req.params.id).select('-password');  // Check mentor model if not found in student
+      }
     }
 
     if (!user) {
@@ -115,9 +125,12 @@ const getUserById = async (req, res) => {
 
     res.json(user);
   } catch (error) {
+    console.error(error); // Log error for debugging purposes
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+
 
 // Update user details
 const updateUser = async (req, res) => {
