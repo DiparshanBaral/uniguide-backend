@@ -85,4 +85,35 @@ const getUniversityById = async (req, res) => {
   }
 };
 
-module.exports = { addUniversity, getUniversityById };
+// Function to fetch all universities by country
+const getUniversitiesByCountry = async (req, res) => {
+  const { country } = req.params;
+  let universityModel;
+
+  switch (country.toLowerCase()) {
+    case 'us':
+      universityModel = USUniversity;
+      break;
+    case 'uk':
+      universityModel = UKUniversity;
+      break;
+    case 'canada':
+      universityModel = CanadaUniversity;
+      break;
+    case 'australia':
+      universityModel = AustraliaUniversity;
+      break;
+    default:
+      return res.status(400).json({ message: 'Invalid country' });
+  }
+
+  try {
+    const universities = await universityModel.find();
+    res.status(200).json(universities);
+  } catch (error) {
+    console.error(`Error fetching universities in ${country.toUpperCase()}:`, error);
+    res.status(500).json({ message: 'Error fetching universities' });
+  }
+};
+
+module.exports = { addUniversity, getUniversityById, getUniversitiesByCountry };
