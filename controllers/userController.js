@@ -134,7 +134,7 @@ const getUserById = async (req, res) => {
 
 // Update user details
 const updateUser = async (req, res) => {
-  const { firstname, lastname, email } = req.body;
+  const { firstname, lastname, email, profilePic } = req.body;
 
   try {
     let user;
@@ -152,6 +152,7 @@ const updateUser = async (req, res) => {
     user.firstname = firstname || user.firstname;
     user.lastname = lastname || user.lastname;
     user.email = email || user.email;
+    user.profilePic = profilePic || user.profilePic;
 
     // Save the updated user
     const updatedUser = await user.save();
@@ -164,6 +165,7 @@ const updateUser = async (req, res) => {
       lastname: updatedUser.lastname,
       email: updatedUser.email,
       role: updatedUser.role,
+      profilePic: updatedUser.profilePic,
     });
   } catch (error) {
     console.error('Error updating user:', error.message);

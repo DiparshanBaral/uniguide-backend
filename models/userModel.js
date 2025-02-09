@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: 'student',
     },
+    profilePic: { type: String },
   },
   { timestamps: true },
 );
@@ -25,7 +26,7 @@ const adminSchema = new mongoose.Schema(
 );
 
 // Explicitly specify the database and collection names
-const db = mongoose.connection.useDb("Users");
+const db = mongoose.connection.useDb('Users');
 
 const Student = db.model('Student', userSchema, 'Students');
 const Mentor = db.model('Mentor', userSchema, 'Mentors');
