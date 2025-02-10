@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { Admin } = require("../models/userModel");
+const { Admin } = require("../models/adminModel");
 
 const SECRET_KEY = "UniGuideJWT";
 

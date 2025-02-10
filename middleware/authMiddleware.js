@@ -1,19 +1,21 @@
 const jwt = require('jsonwebtoken');
-const { Student, Mentor, Admin  } = require('../models/userModel');
+const { Student } = require('../models/studentModel');
+const { Mentor } = require('../models/mentorModel');
+const { Admin } = require('../models/adminModel');
 
 // Middleware to protect routes (Students, Mentors, and Admins)
 const protect = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1]; // Extract the token
+  const token = req.headers.authorization?.split(' ')[1]; // Extract token
 
   if (!token) {
     return res.status(401).json({ message: 'Not authorized, no token' });
   }
 
   try {
-    // Verify the token
+    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Check user in the correct collection
+    // Check user in the appropriate collection
     let user;
     if (decoded.role === 'student') {
       user = await Student.findById(decoded.id).select('-password');
@@ -27,8 +29,8 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authorized, user not found' });
     }
 
-    req.user = user; // Attach the user object to the request
-    next(); // Proceed to the next middleware/route
+    req.user = user; // Attach user object to request
+    next(); // Proceed to next middleware/route
   } catch (error) {
     res.status(401).json({ message: 'Not authorized, invalid token' });
   }

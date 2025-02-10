@@ -1,4 +1,5 @@
 require('dotenv').config();
+const cloudinary = require("cloudinary").v2;
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -12,13 +13,21 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+cloudinary.config({
+  cloud_name: "YOUR_CLOUD_NAME",
+  api_key: "YOUR_API_KEY",
+  api_secret: "YOUR_API_SECRET"
+});
+
 // Import routes
-const userRoutes = require('./routes/userRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const mentorRoutes = require('./routes/mentorRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const universityRoutes = require('./routes/universityRoutes');
 
 // Use routes
-app.use('/users', userRoutes);
+app.use('/student', studentRoutes);
+app.use('/mentor', mentorRoutes);
 app.use('/admin', adminRoutes);
 app.use('/universities', universityRoutes);
 
