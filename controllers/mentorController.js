@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Mentor = require('../models/mentorModel');
+const { Mentor } = require('../models/mentorModel');
 
 // Register a new mentor
 const registerMentor = async (req, res) => {

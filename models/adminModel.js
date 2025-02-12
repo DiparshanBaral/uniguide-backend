@@ -11,4 +11,4 @@ const adminSchema = new mongoose.Schema(
 const db = mongoose.connection.useDb('Users');
 const Admin = db.model('Admin', adminSchema, 'Admins');
 
-module.exports = Admin;
+module.exports = { Admin };

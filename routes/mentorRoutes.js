@@ -5,7 +5,7 @@ const {
   getMentorById,
   updateMentor,
 } = require('../controllers/mentorController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, protectMentorRoute } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -16,9 +16,9 @@ router.post('/signup', registerMentor);
 router.post('/login', loginMentor);
 
 // Get Mentor by ID (protected route)
-router.get('/:id', protect, getMentorById);
+router.get('/:id', getMentorById);
 
 // Update Mentor by ID (protected route)
-router.put('/:id', protect, updateMentor);
+router.put('/:id', updateMentor);
 
 module.exports = router;

@@ -20,4 +20,4 @@ const db = mongoose.connection.useDb('Users');
 
 const Student = db.model('Student', studentSchema, 'Students');
 
-module.exports = Student;
+module.exports = { Student };

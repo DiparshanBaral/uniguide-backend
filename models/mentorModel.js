@@ -29,4 +29,4 @@ const mentorSchema = new mongoose.Schema(
 const db = mongoose.connection.useDb('Users');
 const Mentor = db.model('Mentor', mentorSchema, 'Mentors');
 
-module.exports = Mentor;
+module.exports = { Mentor };
