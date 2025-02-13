@@ -116,4 +116,38 @@ const getUniversitiesByCountry = async (req, res) => {
   }
 };
 
-module.exports = { addUniversity, getUniversityById, getUniversitiesByCountry };
+//delete university
+const deleteUniversityById = async (req, res) => {
+  const { country, id } = req.params;
+  let universityModel;
+
+  switch (country.toLowerCase()) {
+    case 'us':
+      universityModel = USUniversity;
+      break;
+    case 'uk':
+      universityModel = UKUniversity;
+      break;
+    case 'canada':
+      universityModel = CanadaUniversity;
+      break;
+    case 'australia':
+      universityModel = AustraliaUniversity;
+      break;
+    default:
+      return res.status(400).json({ message: 'Invalid country' });
+  }
+
+  try {
+    const university = await universityModel.findByIdAndDelete(id);
+    if (!university) {
+      return res.status(404).json({ message: 'University not found' });
+    }
+    res.status(200).json({ message: 'University deleted successfully' });
+  } catch (error) {
+    console.error(`Error deleting ${country.toUpperCase()} university:`, error);
+    res.status(500).json({ message: 'Error deleting university' });
+  }
+};
+
+module.exports = { addUniversity, getUniversityById, getUniversitiesByCountry, deleteUniversityById };

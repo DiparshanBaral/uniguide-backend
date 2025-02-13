@@ -122,4 +122,18 @@ const updateMentor = async (req, res) => {
   }
 };
 
-module.exports = { registerMentor, loginMentor, getMentorById, updateMentor };
+//delete mentor by id
+const deleteMentorById = async (req, res) => {
+  try {
+    const mentor = await Mentor.findByIdAndDelete(req.params.id);
+    if (!mentor) {
+      return res.status(404).json({ message: 'Mentor not found' });
+    }
+    res.status(200).json({ message: 'Mentor deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting mentor:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { registerMentor, loginMentor, getMentorById, updateMentor, deleteMentorById };
