@@ -1,6 +1,6 @@
 const express = require("express");
 const { upload } = require("../config/cloudinaryConfig");
-const { applyForAffiliation, updateAffiliationStatus, getAllAffiliationRequests, uploadDocument } = require("../controllers/affiliationController");
+const { applyForAffiliation, updateAffiliationStatus, getAllAffiliationRequests } = require("../controllers/affiliationController");
 const { protect, protectAdminRoute } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -12,6 +12,6 @@ router.post("/apply", protect, upload.single("document"), applyForAffiliation);
 router.put("/:id/status", protect, protectAdminRoute, updateAffiliationStatus);
 
 // Admin fetches all requests
-router.get("/", protect, protectAdminRoute, getAllAffiliationRequests);
+router.get("/pendingrequests", protect, protectAdminRoute, getAllAffiliationRequests);
 
 module.exports = router;

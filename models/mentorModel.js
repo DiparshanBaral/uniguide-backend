@@ -26,7 +26,7 @@ const mentorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const db = mongoose.connection.useDb('Users');
-const Mentor = db.model('Mentor', mentorSchema, 'Mentors');
+const usersDb  = mongoose.connection.useDb('Users');
+const Mentor = usersDb.model('Mentor', mentorSchema, 'Mentors');
 
 module.exports = { Mentor };

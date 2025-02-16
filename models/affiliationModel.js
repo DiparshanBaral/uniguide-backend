@@ -10,14 +10,13 @@ const affiliationSchema = new mongoose.Schema(
   {
     mentorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Mentors", // Refers to the Mentor collection in the 'Users' database
+      ref: "Mentors", // Refers to the Mentors collection in the 'Users' database
       required: true,
       index: true,
     },
     universityId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      // Dynamically reference the appropriate university collection based on the university location
       refPath: 'universityLocation', // Dynamically determines the collection
       index: true,
     },
@@ -30,6 +29,12 @@ const affiliationSchema = new mongoose.Schema(
         },
         message: "Invalid URL format for documentUrl",
       },
+    },
+    description: {
+      type: String,
+      required: true,
+      minlength: 10,
+      maxlength: 500,
     },
     status: {
       type: String,
