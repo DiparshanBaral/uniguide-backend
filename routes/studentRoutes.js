@@ -22,6 +22,6 @@ router.get('/:id', protect, getStudentById);
 router.put('/:id', protect, updateStudent);
 
 // Delete Student by ID
-router.delete('/:id', deleteStudentById);
+// router.delete('/:id', deleteStudentById);
 
 module.exports = router;

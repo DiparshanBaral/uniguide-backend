@@ -22,6 +22,6 @@ router.get('/:id', getMentorById);
 router.put('/:id', updateMentor);
 
 // Delete Mentor by ID
-router.delete('/:id', deleteMentorById);
+// router.delete('/:id', deleteMentorById);
 
 module.exports = router;
