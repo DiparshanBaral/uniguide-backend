@@ -1,7 +1,7 @@
 require('dotenv').config();
 const bcrypt = require("bcryptjs");  // For password hashing
 const mongoose = require("mongoose");  // For MongoDB interaction
-const { Admin } = require("./models/userModel");  // Import Admin model
+const { Admin } = require("./models/adminModel");  // Import Admin model
 const connectDB = require('./config/db');
 
 // Connect to MongoDB
