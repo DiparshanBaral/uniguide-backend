@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Mentor = require('../models/mentorModel').Mentor;
 
 // Use the 'Users' database for mentors
 const usersDb = mongoose.connection.useDb('Users');
@@ -10,7 +11,7 @@ const affiliationSchema = new mongoose.Schema(
   {
     mentorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Mentors", // Refers to the Mentors collection in the 'Users' database
+      ref: 'Mentor', // Refers to the Mentor model in the 'Users' database
       required: true,
       index: true,
     },
@@ -25,7 +26,7 @@ const affiliationSchema = new mongoose.Schema(
       required: true,
       validate: {
         validator: function (v) {
-          return /^https?:\/\/[^\s]+$/.test(v);
+          return /^https?:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|raw)\/upload\/v\d+\/affiliation\/[a-zA-Z0-9_-]+\.(pdf|jpg|jpeg|png)$/.test(v);
         },
         message: "Invalid URL format for documentUrl",
       },
@@ -55,13 +56,13 @@ affiliationSchema.virtual('university', {
   ref: function() {
     switch (this.universityLocation) {
       case 'US':
-        return universitiesDb.model('USUniversity', new mongoose.Schema({}), 'US');
+        return 'USUniversity';
       case 'UK':
-        return universitiesDb.model('UKUniversity', new mongoose.Schema({}), 'UK');
+        return 'UKUniversity';
       case 'Canada':
-        return universitiesDb.model('CanadaUniversity', new mongoose.Schema({}), 'Canada');
+        return 'CanadaUniversity';
       case 'Australia':
-        return universitiesDb.model('AustraliaUniversity', new mongoose.Schema({}), 'Australia');
+        return 'AustraliaUniversity';
       default:
         return null;
     }

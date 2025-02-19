@@ -99,7 +99,7 @@ const getStudentById = async (req, res) => {
 
 // Update student details
 const updateStudent = async (req, res) => {
-  const { firstname, lastname, email, profilePic } = req.body;
+  const { firstname, lastname, email } = req.body;
 
   try {
     const student = await Student.findById(req.params.id);
@@ -110,7 +110,6 @@ const updateStudent = async (req, res) => {
     student.firstname = firstname || student.firstname;
     student.lastname = lastname || student.lastname;
     student.email = email || student.email;
-    student.profilePic = profilePic || student.profilePic;
 
     const updatedStudent = await student.save();
 
@@ -120,7 +119,6 @@ const updateStudent = async (req, res) => {
       firstname: updatedStudent.firstname,
       lastname: updatedStudent.lastname,
       email: updatedStudent.email,
-      profilePic: updatedStudent.profilePic,
     });
   } catch (error) {
     console.error('Error updating student:', error.message);

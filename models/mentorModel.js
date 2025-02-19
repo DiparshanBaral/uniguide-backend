@@ -7,21 +7,21 @@ const mentorSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['mentor'], default: 'mentor' },
-    profilePic: { type: String },
+    profilePic: { type: String, default: "" },
 
     // Mentor-Specific Fields
-    bio: { type: String, maxlength: 500 }, // Short introduction
-    expertise: [{ type: String }], // List of expertise areas
-    university: { type: String, required: false }, // Associated university
-    degree: { type: String, required: false }, // Degree obtained
-    yearsOfExperience: { type: Number, required: false }, // Work experience
-    ratings: [{ type: Number }], // Array of ratings (1-5 scale)
+    bio: { type: String, maxlength: 500, default: "" }, // Short introduction
+    expertise: [{ type: String, default: [] }], // List of expertise areas
+    university: { type: String, default: "NA" }, // Associated university
+    degree: { type: String, default: "NA" }, // Degree obtained
+    yearsOfExperience: { type: Number, default: 0 }, // Work experience
+    ratings: [{ type: Number, default: [] }], // Array of ratings (1-5 scale)
     averageRating: { type: Number, default: 0 }, // Calculated rating
-    documentUrl: { type: String }, // Mentor verification document URL
+    documentUrl: { type: String, default: "" }, // Mentor verification document URL
     isApproved: { type: Boolean, default: false }, // Track if admin approved the mentor
 
     // Students connected to this mentor
-    connectedStudents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+    connectedStudents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student', default: [] }],
   },
   { timestamps: true }
 );

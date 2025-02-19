@@ -109,7 +109,6 @@ const updateMentor = async (req, res) => {
     mentor.profilePic = profilePic || mentor.profilePic;
     mentor.bio = bio || mentor.bio;
     mentor.expertise = expertise || mentor.expertise;
-    mentor.university = university || mentor.university;
     mentor.degree = degree || mentor.degree;
     mentor.yearsOfExperience = yearsOfExperience || mentor.yearsOfExperience;
 

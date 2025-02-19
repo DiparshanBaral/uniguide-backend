@@ -13,10 +13,14 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "affiliation", // Cloudinary folder name where docs will be uploaded
-    allowed_formats: ["pdf", "doc", "docx", "jpg", "png"], // Allowed file formats
+    folder: "affiliation", 
+    allowed_formats: ["pdf", "doc", "docx", "jpg", "png", "jpeg"], 
+    resource_type: "auto",  // Let Cloudinary decide the best type
+    access_mode: "public", // Ensures files are publicly accessible
   },
 });
+
+// console.log(result.secure_url);
 
 const upload = multer({ storage }); // Multer upload middleware
 
