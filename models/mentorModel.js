@@ -7,7 +7,15 @@ const mentorSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['mentor'], default: 'mentor' },
-    profilePic: { type: String, default: "" },
+    profilePic: {
+      type: String,
+      validate: {
+        validator: function (v) {
+          return /^https?:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|raw)\/upload\/v\d+\/ProfilePictures\/[a-zA-Z0-9_-]+\.(jpg|jpeg|webp|png)$/.test(v);
+        },
+        message: "Invalid URL format for profilePic",
+      },
+    },
 
     // Mentor-Specific Fields
     bio: { type: String, maxlength: 500, default: "" }, // Short introduction

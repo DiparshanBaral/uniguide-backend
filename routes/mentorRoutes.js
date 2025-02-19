@@ -6,6 +6,7 @@ const {
   updateMentor,
 } = require('../controllers/mentorController');
 const { protect, protectMentorRoute, deleteMentorById } = require('../middleware/authMiddleware');
+const { uploadProfilePic } = require('../config/cloudinaryConfig');
 
 const router = express.Router();
 
@@ -18,8 +19,8 @@ router.post('/login', loginMentor);
 // Get Mentor by ID (protected route)
 router.get('/:id', getMentorById);
 
-// Update Mentor by ID (protected route)
-router.put('/:id', updateMentor);
+// Update Mentor by ID (protected route) with profile picture upload
+router.put('/:id', protect, uploadProfilePic.single('profilePic'), updateMentor);
 
 // Delete Mentor by ID
 // router.delete('/:id', deleteMentorById);

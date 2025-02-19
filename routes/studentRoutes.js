@@ -6,6 +6,7 @@ const {
   updateStudent,
 } = require('../controllers/studentController');
 const { protect, protectStudentRoute, deleteStudentById } = require('../middleware/authMiddleware');
+const { uploadProfilePic } = require('../config/cloudinaryConfig');
 
 const router = express.Router();
 
@@ -18,8 +19,8 @@ router.post('/login', loginStudent);
 // Get Student by ID (protected route)
 router.get('/:id', protect, getStudentById);
 
-// Update Student by ID (protected route)
-router.put('/:id', protect, updateStudent);
+// Update Student by ID (protected route) with profile picture upload
+router.put('/:id', protect, uploadProfilePic.single('profilePic'), updateStudent);
 
 // Delete Student by ID
 // router.delete('/:id', deleteStudentById);

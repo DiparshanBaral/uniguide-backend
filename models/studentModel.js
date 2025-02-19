@@ -7,7 +7,15 @@ const studentSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['student'], default: 'student' },
-    profilePic: { type: String },
+    profilePic: {
+      type: String,
+      validate: {
+        validator: function (v) {
+          return /^https?:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|raw)\/upload\/v\d+\/ProfilePictures\/[a-zA-Z0-9_-]+\.(jpg|jpeg|webp|png)$/.test(v);
+        },
+        message: "Invalid URL format for profilePic",
+      },
+    },
     connectedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' }], // List of mentor IDs
     discussionRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionRoom' }], // Connected discussion rooms
     visaContributions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'VisaPost' }], // Visa-related posts

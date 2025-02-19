@@ -93,9 +93,8 @@ const getMentorById = async (req, res) => {
   }
 };
 
-// Update mentor details
 const updateMentor = async (req, res) => {
-  const { firstname, lastname, email, profilePic, bio, expertise, university, degree, yearsOfExperience } = req.body;
+  const { firstname, lastname, email, profilePic, bio, expertise, degree, yearsOfExperience } = req.body;
 
   try {
     const mentor = await Mentor.findById(req.params.id);
@@ -112,14 +111,31 @@ const updateMentor = async (req, res) => {
     mentor.degree = degree || mentor.degree;
     mentor.yearsOfExperience = yearsOfExperience || mentor.yearsOfExperience;
 
+    // Check if a file was uploaded
+    if (req.file) {
+      mentor.profilePic = req.file.path; // Save the profile picture URL
+    }
+
     const updatedMentor = await mentor.save();
 
-    res.status(200).json({ message: 'Profile updated successfully', updatedMentor });
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      _id: updatedMentor._id,
+      firstname: updatedMentor.firstname,
+      lastname: updatedMentor.lastname,
+      email: updatedMentor.email,
+      profilePic: updatedMentor.profilePic, 
+      bio: updatedMentor.bio,
+      expertise: updatedMentor.expertise, 
+      degree: updatedMentor.degree,
+      yearsOfExperience: updatedMentor.yearsOfExperience,
+    });
   } catch (error) {
     console.error('Error updating mentor:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 //delete mentor by id
 const deleteMentorById = async (req, res) => {

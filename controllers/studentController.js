@@ -107,9 +107,15 @@ const updateStudent = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
+    // Update student details
     student.firstname = firstname || student.firstname;
     student.lastname = lastname || student.lastname;
     student.email = email || student.email;
+
+    // Check if a file was uploaded
+    if (req.file) {
+      student.profilePic = req.file.path; // Save the profile picture URL
+    }
 
     const updatedStudent = await student.save();
 
@@ -119,12 +125,14 @@ const updateStudent = async (req, res) => {
       firstname: updatedStudent.firstname,
       lastname: updatedStudent.lastname,
       email: updatedStudent.email,
+      profilePic: updatedStudent.profilePic, // Return the updated profile picture URL
     });
   } catch (error) {
     console.error('Error updating student:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 //Delete student by id
 const deleteStudentById = async (req, res) => {

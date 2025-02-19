@@ -20,8 +20,19 @@ const storage = new CloudinaryStorage({
   },
 });
 
-// console.log(result.secure_url);
+// Multer storage configuration for profile pictures
+const profilePicStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "ProfilePictures", // Folder for profile pictures
+    allowed_formats: ["jpg", "jpeg", "webp", "png"], // Allowed formats
+    resource_type: "auto", // Let Cloudinary decide the best type
+    access_mode: "public", // Ensures files are publicly accessible
+  },
+});
 
 const upload = multer({ storage }); // Multer upload middleware
 
-module.exports = { upload, cloudinary };
+const uploadProfilePic = multer({ storage: profilePicStorage });
+
+module.exports = { upload, uploadProfilePic, cloudinary };
