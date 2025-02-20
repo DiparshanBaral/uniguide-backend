@@ -150,4 +150,49 @@ const deleteUniversityById = async (req, res) => {
   }
 };
 
-module.exports = { addUniversity, getUniversityById, getUniversitiesByCountry, deleteUniversityById };
+// Function to update a university by ID
+const updateUniversityById = async (req, res) => {
+  try {
+    const { country, id } = req.params;
+
+    // Trim whitespace from country
+    const trimmedCountry = country.trim();
+
+    let UniversityModel;
+
+    // Directly determine the UniversityModel based on the country
+    if (trimmedCountry === 'us') {
+      UniversityModel = USUniversity;
+    } else if (trimmedCountry === 'uk') {
+      UniversityModel = UKUniversity;
+    } else if (trimmedCountry === 'canada') {
+      UniversityModel = CanadaUniversity;
+    } else if (trimmedCountry === 'australia') {
+      UniversityModel = AustraliaUniversity;
+    } else {
+      return res.status(400).json({ message: 'Invalid country specified.' });
+    }
+
+    // Prepare the update data
+    const updateData = req.body;
+
+    // If an image is uploaded, get the URL and add it to the update data
+    if (req.file) {
+      updateData.image = req.file.path; // Cloudinary returns the image URL in req.file.path
+    }
+
+    // Update the university in the database
+    const updatedUniversity = await UniversityModel.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!updatedUniversity) {
+      return res.status(404).json({ message: 'University not found.' });
+    }
+
+    return res.status(200).json(updatedUniversity);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error updating university.', error });
+  }
+};
+
+
+module.exports = { addUniversity, getUniversityById, getUniversitiesByCountry, deleteUniversityById, updateUniversityById };

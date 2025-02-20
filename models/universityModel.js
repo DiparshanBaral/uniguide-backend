@@ -23,8 +23,17 @@ const universitySchema = new mongoose.Schema({
   },
   acceptanceRate: { type: Number, required: true },
   graduationRate: { type: Number, required: true },
+  image: {
+    type: String,
+    validate: {
+      validator: function (v) {
+        return /^https?:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|raw)\/upload\/v\d+\/universities\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png)$/.test(v);
+      },
+      message: "Invalid URL format for university image",
+    },
+  },
+  affiliatedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' }], // Array of mentor IDs
 }, { timestamps: true });
-
 
 // Explicitly specify the database and collection names for each country
 const db = mongoose.connection.useDb('Universities'); // Use the 'Universities' database
