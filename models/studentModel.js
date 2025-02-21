@@ -16,7 +16,10 @@ const studentSchema = new mongoose.Schema(
         message: "Invalid URL format for profilePic",
       },
     },
-    connectedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' }], // List of mentor IDs
+    bio: { type: String, default: '' }, // Short biography
+    major: { type: String, default: '' }, // Field of study
+    targetedUniversities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'University' }], // Interested universities
+    connectedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mentors' }], // List of mentor IDs
     discussionRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionRoom' }], // Connected discussion rooms
     visaContributions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'VisaPost' }], // Visa-related posts
     profileCompleted: { type: Boolean, default: false }, // Track profile completion

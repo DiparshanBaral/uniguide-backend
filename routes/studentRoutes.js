@@ -4,6 +4,8 @@ const {
   loginStudent,
   getStudentById,
   updateStudent,
+  getPublicStudentProfile,
+  addToWishlist,
 } = require('../controllers/studentController');
 const { protect, protectStudentRoute, deleteStudentById } = require('../middleware/authMiddleware');
 const { uploadProfilePic } = require('../config/cloudinaryConfig');
@@ -24,5 +26,11 @@ router.put('/:id', protect, uploadProfilePic.single('profilePic'), updateStudent
 
 // Delete Student by ID
 // router.delete('/:id', deleteStudentById);
+
+// Get Public Student Profile (accessible to students and mentors)
+router.get('/public/:id', protect, getPublicStudentProfile);
+
+router.post('/wishlist', protect, addToWishlist);
+
 
 module.exports = router;
