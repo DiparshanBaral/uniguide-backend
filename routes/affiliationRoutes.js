@@ -1,6 +1,6 @@
 const express = require("express");
 const { upload } = require("../config/cloudinaryConfig");
-const { applyForAffiliation, updateAffiliationStatus, getAllAffiliationRequests, getAllApprovedAffiliationRequests } = require("../controllers/affiliationController");
+const { applyForAffiliation, updateAffiliationStatus, getAllAffiliationRequests, getAllApprovedAffiliationRequests, deleteAffiliation } = require("../controllers/affiliationController");
 const { protect, protectAdminRoute } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -16,5 +16,8 @@ router.get("/pendingrequests", protect, protectAdminRoute, getAllAffiliationRequ
 
 // Admin fetches all approved requests
 router.get("/approvedrequests", protect, protectAdminRoute, getAllApprovedAffiliationRequests);
+
+// Admin deletes an affiliation request by ID
+router.delete("/:id", protect, protectAdminRoute, deleteAffiliation);
 
 module.exports = router;

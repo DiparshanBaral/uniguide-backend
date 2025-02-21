@@ -133,7 +133,7 @@ const getAllAffiliationRequests = async (req, res) => {
       .populate({
         path: 'mentorId',
         model: Mentor, // Directly use the imported Mentor model
-        select: 'firstname lastname email',
+        select: 'firstname lastname email profilePic',
       })
       .lean(); // Convert to a plain object to modify `universityId`
 
@@ -182,9 +182,29 @@ const getAllApprovedAffiliationRequests = async (req, res) => {
   }
 };
 
+// Delete an affiliation request by ID
+const deleteAffiliation = async (req, res) => {
+  try {
+    const { id } = req.params; // Get affiliation ID from request parameters
+
+    // Find and delete the affiliation request
+    const affiliation = await Affiliation.findByIdAndDelete(id);
+
+    if (!affiliation) {
+      return res.status(404).json({ error: 'Affiliation request not found' });
+    }
+
+    res.status(200).json({ message: 'Affiliation request deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting affiliation request: ', JSON.stringify(error, null, 2));
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   applyForAffiliation,
   updateAffiliationStatus,
   getAllAffiliationRequests,
   getAllApprovedAffiliationRequests,
+  deleteAffiliation,
 };
