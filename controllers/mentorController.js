@@ -79,8 +79,26 @@ const loginMentor = async (req, res) => {
   }
 };
 
-// Fetch mentor by ID
-const getMentorById = async (req, res) => {
+// Fetch mentor by ID (Protected: Only the logged-in mentor can access their own profile)
+const getMentorProfile = async (req, res) => {
+  try {
+    if (req.user.id !== req.params.id) {
+      return res.status(403).json({ message: 'Access denied. Unauthorized request.' });
+    }
+
+    const mentor = await Mentor.findById(req.user.id).select('-password');
+    if (!mentor) {
+      return res.status(404).json({ message: 'Mentor not found' });
+    }
+    res.json(mentor);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Fetch mentor by ID (Public: Accessible to students & mentors)
+const getMentorPublicProfile = async (req, res) => {
   try {
     const mentor = await Mentor.findById(req.params.id).select('-password');
     if (!mentor) {
@@ -151,4 +169,4 @@ const deleteMentorById = async (req, res) => {
   }
 };
 
-module.exports = { registerMentor, loginMentor, getMentorById, updateMentor, deleteMentorById };
+module.exports = { registerMentor, loginMentor, getMentorProfile, getMentorPublicProfile, updateMentor, deleteMentorById };

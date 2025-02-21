@@ -2,10 +2,11 @@ const express = require('express');
 const {
   registerMentor,
   loginMentor,
-  getMentorById,
+  getMentorProfile,
+  getMentorPublicProfile,
   updateMentor,
 } = require('../controllers/mentorController');
-const { protect, protectMentorRoute, deleteMentorById } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 const { uploadProfilePic } = require('../config/cloudinaryConfig');
 
 const router = express.Router();
@@ -16,8 +17,11 @@ router.post('/signup', registerMentor);
 // Mentor Login
 router.post('/login', loginMentor);
 
-// Get Mentor by ID (protected route)
-router.get('/:id', getMentorById);
+// Get Mentor by ID (Protected: Only the mentor themselves can access their profile)
+router.get('/profile/:id', protect, getMentorProfile);
+
+// Get Mentor by ID (Public: Students and other mentors can access this)
+router.get('/:id', getMentorPublicProfile);
 
 // Update Mentor by ID (protected route) with profile picture upload
 router.put('/:id', protect, uploadProfilePic.single('profilePic'), updateMentor);
