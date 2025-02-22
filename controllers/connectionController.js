@@ -124,7 +124,7 @@ const getApprovedConnections = async (req, res) => {
       .populate({
         path: 'studentId',
         model: Student, // Directly use the imported Student model
-        select: 'firstname lastname email profilePic',
+        select: 'firstname lastname email profilePic major bio',
       })
       .lean();
 
@@ -148,7 +148,7 @@ const getStudentPendingConnections = async (req, res) => {
         .populate({
           path: 'mentorId',
           model: Mentor, // Directly use the imported Mentor model
-          select: 'firstname lastname email profilePic',
+          select: 'firstname lastname email profilePic university degree yearsOfExperience',
         })
         .lean();
   
@@ -172,7 +172,7 @@ const getStudentApprovedConnections = async (req, res) => {
         .populate({
           path: 'mentorId',
           model: Mentor, // Directly use the imported Mentor model
-          select: 'firstname lastname email profilePic',
+          select: 'firstname lastname email profilePic university expertise degree yearsOfExperience',
         })
         .lean();
   
