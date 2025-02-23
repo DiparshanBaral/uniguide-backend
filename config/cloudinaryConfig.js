@@ -44,8 +44,8 @@ const universityImageStorage = new CloudinaryStorage({
 
 const upload = multer({ storage }); // Multer upload middleware
 
-const uploadProfilePic = multer({ storage: profilePicStorage });
+const uploadProfilePic = multer({ storage: profilePicStorage }); //Multer profile pic upload middleware
 
-const uploadUniversityImage = multer({ storage: universityImageStorage });
+const uploadUniversityImage = multer({ storage: universityImageStorage });// Multer university image upload middleware
 
 module.exports = { upload, uploadProfilePic, uploadUniversityImage, cloudinary };
