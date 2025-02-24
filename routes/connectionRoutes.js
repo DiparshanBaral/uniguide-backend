@@ -6,6 +6,7 @@ const {
   getApprovedConnections,
   getStudentPendingConnections,
   getStudentApprovedConnections,
+  deleteConnection,
 } = require("../controllers/connectionController");
 const { protect, protectMentorRoute, protectStudentRoute } = require("../middleware/authMiddleware");
 
@@ -28,5 +29,8 @@ router.get("/student/pendingconnections", protect, protectStudentRoute, getStude
 
 // Student fetches all approved connections
 router.get("/student/approvedconnections", protect, protectStudentRoute, getStudentApprovedConnections);
+
+// Delete a connection by ID
+router.delete('/:id', protect, deleteConnection);
 
 module.exports = router;

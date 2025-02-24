@@ -29,6 +29,11 @@ const connectionSchema = new mongoose.Schema(
       enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
+    portalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Portal', 
+      default: null, 
+    },
   },
   { timestamps: true }
 );

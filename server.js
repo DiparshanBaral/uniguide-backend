@@ -19,6 +19,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const universityRoutes = require('./routes/universityRoutes');
 const affiliationRoutes = require("./routes/affiliationRoutes");
 const connectionRoutes = require('./routes/connectionRoutes');
+const portalRoutes = require('./routes/portalRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -27,6 +29,8 @@ app.use('/admin', adminRoutes);
 app.use('/universities', universityRoutes);
 app.use("/affiliations", affiliationRoutes);
 app.use('/connections', connectionRoutes);
+app.use('/portal', portalRoutes);
+app.use('/tasks', taskRoutes)
 
 app.get('/', (req, res) => {
   res.send('UNIGUIDE API is running....');
