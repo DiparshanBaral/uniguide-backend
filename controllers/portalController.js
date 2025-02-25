@@ -1,36 +1,35 @@
 const { Portal } = require('../models/portalModel');
 const { getTasksByCountry } = require('./taskController');
 
-// Set default tasks for a portal based on the country
 const setDefaultTasks = async (portalId, country) => {
-    try {
-      // Find the portal by ID
-      const portal = await Portal.findById(portalId);
-      if (!portal) {
-        throw new Error('Portal not found');
-      }
-
-      // Fetch default tasks for the specified country using getTasksByCountry
-      const defaultTasks = await getTasksByCountry({ query: { country } });
-      if (!defaultTasks || defaultTasks.length === 0) {
-        throw new Error('No default tasks found for the specified country');
-      }
-
-      // Map the default tasks to the portal's tasks array
-      portal.tasks = defaultTasks.map((task) => ({
-        taskId: task._id,
-        title: task.title,
-        description: task.description,
-        dueDate: task.dueDate,
-        status: task.status,
-      }));
-
-      // Save the updated portal
-      await portal.save();
-    } catch (error) {
-      console.error('Error setting default tasks:', error.message);
-      throw error;
+  try {
+    // Find the portal by ID
+    const portal = await Portal.findById(portalId);
+    if (!portal) {
+      throw new Error('Portal not found');
     }
+
+    // Fetch default tasks for the specified country using getTasksByCountry
+    const defaultTasks = await getTasksByCountry({ query: { country } });
+    if (!defaultTasks || defaultTasks.length === 0) {
+      throw new Error('No default tasks found for the specified country');
+    }
+
+    // Map the default tasks to the portal's tasks array
+    portal.tasks = defaultTasks.map((task) => ({
+      taskId: task._id,
+      title: task.title,
+      description: task.description,
+      dueDate: task.dueDate,
+      taskStatus: task.status, // Updated from 'status' to 'taskStatus'
+    }));
+
+    // Save the updated portal
+    await portal.save();
+  } catch (error) {
+    console.error('Error setting default tasks:', error.message);
+    throw error;
+  }
 };
 
 // Add a task to the portal
@@ -125,10 +124,10 @@ const updateTask = async (req, res) => {
 // Update a task's status
 const updateTaskStatus = async (req, res) => {
   try {
-    const { portalId, taskId, status } = req.body;
+    const { portalId, taskId, taskStatus } = req.body; // Updated from 'status' to 'taskStatus'
 
     // Validate required fields
-    if (!portalId || !taskId || !status) {
+    if (!portalId || !taskId || !taskStatus) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
@@ -144,7 +143,7 @@ const updateTaskStatus = async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    task.status = status;
+    task.taskStatus = taskStatus; // Updated from 'status' to 'taskStatus'
     await portal.save();
 
     res.status(200).json({ message: 'Task status updated successfully', portal });

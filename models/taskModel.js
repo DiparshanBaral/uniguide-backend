@@ -14,15 +14,9 @@ const taskSchema = new mongoose.Schema(
       enum: ['US', 'UK', 'Canada', 'Australia'], // Country-specific tasks
       required: true,
     },
-    status: {
-      type: String,
-      enum: ['Pending', 'Completed'],
-      default: 'Pending',
-    },
   },
   { timestamps: true }
 );
 
 const Task = usersDb.model('Task', taskSchema, 'Tasks');
-
-module.exports = { Task }
+module.exports = { Task };

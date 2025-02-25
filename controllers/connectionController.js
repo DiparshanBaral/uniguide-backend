@@ -57,9 +57,6 @@ const updateConnectionStatus = async (req, res) => {
     const { status } = req.body; // Get the status (Approved or Rejected)
     const { id } = req.params; // Get the Connection ID
 
-    console.log('Request body:', req.body); // Log the request body
-    console.log('Connection ID:', id); // Log the connection ID
-
     // Validate the status field
     if (!status) {
       return res.status(400).json({ error: 'Status field is required in the request body' });
@@ -72,8 +69,6 @@ const updateConnectionStatus = async (req, res) => {
 
     // Find the connection request by ID
     const connection = await Connection.findById(id);
-    console.log('Connection Object:', connection); // Log the connection object
-
     if (!connection) {
       return res.status(404).json({ error: 'Connection request not found' });
     }
@@ -136,7 +131,6 @@ const updateConnectionStatus = async (req, res) => {
           taskId: task._id,
           title: task.title,
           description: task.description,
-          dueDate: task.dueDate,
           status: task.status,
         })),
         documents: [],
@@ -144,29 +138,30 @@ const updateConnectionStatus = async (req, res) => {
 
       // Save the portal
       const savedPortal = await portal.save();
-      console.log('Saved Portal:', savedPortal); // Log the saved portal
-
-      // Update the connection with the portalId
-      connection.portalId = savedPortal._id;
 
       // Set default tasks for the portal (if needed)
       await setDefaultTasks(savedPortal._id, country);
-    }
 
-    // Update the status of the connection request
-    connection.status = status;
-
-    // Save the updated connection
-    try {
-      await connection.save();
-      console.log('Connection Updated:', connection); // Log the updated connection
-    } catch (saveError) {
-      console.error('Error saving connection:', saveError);
-      return res.status(500).json({ error: 'Failed to update connection' });
+      // Update the connection with the portalId and status
+      await Connection.findByIdAndUpdate(
+        id,
+        {
+          status: 'Approved',
+          portalId: savedPortal._id,
+        },
+        { new: true }
+      );
+    } else {
+      // If the request is rejected, simply update the status
+      await Connection.findByIdAndUpdate(
+        id,
+        { status: 'Rejected' },
+        { new: true }
+      );
     }
 
     // Respond with the updated status
-    res.status(200).json({ message: `Connection ${status.toLowerCase()} successfully`, connection });
+    res.status(200).json({ message: `Connection ${status.toLowerCase()} successfully` });
   } catch (error) {
     console.error('Error updating connection status:', error.stack);
     res.status(500).json({ error: error.message || 'An error occurred while updating the connection status' });
