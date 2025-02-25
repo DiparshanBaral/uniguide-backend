@@ -31,8 +31,7 @@ const connectionSchema = new mongoose.Schema(
     },
     portalId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Portal', 
-      default: null, 
+      ref: 'Portal',
     },
   },
   { timestamps: true }

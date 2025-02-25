@@ -54,8 +54,14 @@ const applyForConnection = async (req, res) => {
 // Mentor Approves or Rejects Connection Request
 const updateConnectionStatus = async (req, res) => {
   try {
-    const { status } = req.body; // Get the status (Approved or Rejected)
+    const {status} = req.body; // Get the status (Approved or Rejected)
+    console.log('Request body:', status); // Add this to debug
     const { id } = req.params; // Get the Connection ID
+
+    // Validate the status field
+    if (!status) {
+      return res.status(400).json({ error: 'Status field is required in the request body' });
+    }
 
     // Validate the provided status
     if (!['Approved', 'Rejected'].includes(status)) {
@@ -96,9 +102,6 @@ const updateConnectionStatus = async (req, res) => {
 
       // Fetch default tasks for the mentor's country
       const defaultTasks = await Task.find({ country }).lean();
-
-      // Log tasks for debugging
-      console.log('Default tasks fetched for country:', country, defaultTasks);
 
       // Ensure tasks are not empty
       if (!defaultTasks || defaultTasks.length === 0) {
@@ -156,7 +159,6 @@ const updateConnectionStatus = async (req, res) => {
     res.status(500).json({ error: error.message || 'An error occurred while updating the connection status' });
   }
 };
-
 // Get all pending connection requests for a mentor
 const getPendingConnectionRequests = async (req, res) => {
   try {
