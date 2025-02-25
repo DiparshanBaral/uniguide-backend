@@ -1,4 +1,4 @@
-const Portal = require('../models/portalModel');
+const { Portal } = require('../models/portalModel');
 const { getTasksByCountry } = require('./taskController');
 
 // Set default tasks for a portal based on the country

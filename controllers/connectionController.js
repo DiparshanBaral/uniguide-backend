@@ -1,8 +1,8 @@
-const Connection = require('../models/connectionModel');
+const { Connection } = require('../models/connectionModel');
 const { Student } = require('../models/studentModel');
 const { Mentor } = require('../models/mentorModel');
-const Portal = require('../models/portalModel');
-const Task = require('../models/taskModel');
+const { Portal } = require('../models/portalModel');
+const { Task } = require('../models/taskModel');
 const { setDefaultTasks } = require('./portalController');
 const { USUniversity, UKUniversity, CanadaUniversity, AustraliaUniversity } = require('../models/universityModel');
 
@@ -54,9 +54,11 @@ const applyForConnection = async (req, res) => {
 // Mentor Approves or Rejects Connection Request
 const updateConnectionStatus = async (req, res) => {
   try {
-    const {status} = req.body; // Get the status (Approved or Rejected)
-    console.log('Request body:', status); // Add this to debug
+    const { status } = req.body; // Get the status (Approved or Rejected)
     const { id } = req.params; // Get the Connection ID
+
+    console.log('Request body:', req.body); // Log the request body
+    console.log('Connection ID:', id); // Log the connection ID
 
     // Validate the status field
     if (!status) {
@@ -70,6 +72,8 @@ const updateConnectionStatus = async (req, res) => {
 
     // Find the connection request by ID
     const connection = await Connection.findById(id);
+    console.log('Connection Object:', connection); // Log the connection object
+
     if (!connection) {
       return res.status(404).json({ error: 'Connection request not found' });
     }
@@ -140,6 +144,7 @@ const updateConnectionStatus = async (req, res) => {
 
       // Save the portal
       const savedPortal = await portal.save();
+      console.log('Saved Portal:', savedPortal); // Log the saved portal
 
       // Update the connection with the portalId
       connection.portalId = savedPortal._id;
@@ -150,7 +155,15 @@ const updateConnectionStatus = async (req, res) => {
 
     // Update the status of the connection request
     connection.status = status;
-    await connection.save();
+
+    // Save the updated connection
+    try {
+      await connection.save();
+      console.log('Connection Updated:', connection); // Log the updated connection
+    } catch (saveError) {
+      console.error('Error saving connection:', saveError);
+      return res.status(500).json({ error: 'Failed to update connection' });
+    }
 
     // Respond with the updated status
     res.status(200).json({ message: `Connection ${status.toLowerCase()} successfully`, connection });
@@ -159,6 +172,7 @@ const updateConnectionStatus = async (req, res) => {
     res.status(500).json({ error: error.message || 'An error occurred while updating the connection status' });
   }
 };
+
 // Get all pending connection requests for a mentor
 const getPendingConnectionRequests = async (req, res) => {
   try {

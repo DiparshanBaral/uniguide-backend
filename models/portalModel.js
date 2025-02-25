@@ -56,4 +56,6 @@ const portalSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = usersDb.model('Portal', portalSchema, 'Portals');
+const Portal = usersDb.model('Portal', portalSchema, 'Portals');
+
+module.exports = { Portal };
