@@ -2,9 +2,13 @@ const { Connection } = require('../models/connectionModel');
 const { Student } = require('../models/studentModel');
 const { Mentor } = require('../models/mentorModel');
 const { Portal } = require('../models/portalModel');
-const { Task } = require('../models/taskModel');
-const { setDefaultTasks } = require('./portalController');
-const { USUniversity, UKUniversity, CanadaUniversity, AustraliaUniversity } = require('../models/universityModel');
+const { Task } = require('../models/taskModel')
+const {
+  USUniversity,
+  UKUniversity,
+  CanadaUniversity,
+  AustraliaUniversity,
+} = require('../models/universityModel');
 
 // Create a mapping for university models
 const universityModels = {
@@ -32,7 +36,9 @@ const applyForConnection = async (req, res) => {
     });
 
     if (existingRequest) {
-      return res.status(400).json({ error: 'You have already submitted a pending connection request to this mentor.' });
+      return res
+        .status(400)
+        .json({ error: 'You have already submitted a pending connection request to this mentor.' });
     }
 
     // Save the connection request
@@ -47,7 +53,9 @@ const applyForConnection = async (req, res) => {
     res.status(201).json({ message: 'Connection request submitted successfully', connection });
   } catch (error) {
     console.error('Error in applyForConnection: ', JSON.stringify(error, null, 2));
-    res.status(500).json({ error: error.message || 'An error occurred during the connection process' });
+    res
+      .status(500)
+      .json({ error: error.message || 'An error occurred during the connection process' });
   }
 };
 
@@ -99,26 +107,26 @@ const updateConnectionStatus = async (req, res) => {
         return res.status(400).json({ error: 'Mentor does not have a valid university location' });
       }
 
-      // Fetch default tasks for the mentor's country
+      // Fetch default tasks for the specified country
       const defaultTasks = await Task.find({ country }).lean();
 
       // Ensure tasks are not empty
       if (!defaultTasks || defaultTasks.length === 0) {
-        return res.status(400).json({ error: 'No default tasks found for the mentor\'s country' });
+        return res.status(400).json({ error: "No default tasks found for the mentor's country" });
       }
 
       // Add student to mentor's connectedStudents list
       await Mentor.findByIdAndUpdate(
         mentorId,
         { $addToSet: { connectedStudents: studentId } },
-        { new: true }
+        { new: true },
       );
 
       // Add mentor to student's connectedMentors list
       await Student.findByIdAndUpdate(
         studentId,
         { $addToSet: { connectedMentors: mentorId } },
-        { new: true }
+        { new: true },
       );
 
       // Create a new portal for the student-mentor pair
@@ -131,16 +139,13 @@ const updateConnectionStatus = async (req, res) => {
           taskId: task._id,
           title: task.title,
           description: task.description,
-          status: task.status,
+          taskStatus: 'Pending',
         })),
         documents: [],
       });
 
       // Save the portal
       const savedPortal = await portal.save();
-
-      // Set default tasks for the portal (if needed)
-      await setDefaultTasks(savedPortal._id, country);
 
       // Update the connection with the portalId and status
       await Connection.findByIdAndUpdate(
@@ -149,22 +154,20 @@ const updateConnectionStatus = async (req, res) => {
           status: 'Approved',
           portalId: savedPortal._id,
         },
-        { new: true }
+        { new: true },
       );
     } else {
       // If the request is rejected, simply update the status
-      await Connection.findByIdAndUpdate(
-        id,
-        { status: 'Rejected' },
-        { new: true }
-      );
+      await Connection.findByIdAndUpdate(id, { status: 'Rejected' }, { new: true });
     }
 
     // Respond with the updated status
     res.status(200).json({ message: `Connection ${status.toLowerCase()} successfully` });
   } catch (error) {
     console.error('Error updating connection status:', error.stack);
-    res.status(500).json({ error: error.message || 'An error occurred while updating the connection status' });
+    res
+      .status(500)
+      .json({ error: error.message || 'An error occurred while updating the connection status' });
   }
 };
 
@@ -218,51 +221,57 @@ const getApprovedConnections = async (req, res) => {
 
 // Get all pending connections for a student
 const getStudentPendingConnections = async (req, res) => {
-    try {
-      const { studentId } = req.query;
-  
-      if (!studentId) {
-        return res.status(400).json({ error: 'Student ID is required' });
-      }
-  
-      const connections = await Connection.find({ studentId, status: 'Pending' })
-        .populate({
-          path: 'mentorId',
-          model: Mentor, // Directly use the imported Mentor model
-          select: 'firstname lastname email profilePic university degree yearsOfExperience',
-        })
-        .lean();
-  
-      res.status(200).json(connections);
-    } catch (error) {
-      console.error('Error fetching pending connections for student: ', JSON.stringify(error, null, 2));
-      res.status(500).json({ error: error.message });
-    }
-  };
+  try {
+    const { studentId } = req.query;
 
-  // Get all approved connections for a student
-const getStudentApprovedConnections = async (req, res) => {
-    try {
-      const { studentId } = req.query;
-  
-      if (!studentId) {
-        return res.status(400).json({ error: 'Student ID is required' });
-      }
-  
-      const connections = await Connection.find({ studentId, status: 'Approved' })
-        .populate({
-          path: 'mentorId',
-          model: Mentor, // Directly use the imported Mentor model
-          select: 'firstname lastname email profilePic university expertise degree yearsOfExperience',
-        })
-        .lean();
-  
-      res.status(200).json(connections);
-    } catch (error) {
-      console.error('Error fetching approved connections for student: ', JSON.stringify(error, null, 2));
-      res.status(500).json({ error: error.message });
+    if (!studentId) {
+      return res.status(400).json({ error: 'Student ID is required' });
     }
-  };
+
+    const connections = await Connection.find({ studentId, status: 'Pending' })
+      .populate({
+        path: 'mentorId',
+        model: Mentor, // Directly use the imported Mentor model
+        select: 'firstname lastname email profilePic university degree yearsOfExperience',
+      })
+      .lean();
+
+    res.status(200).json(connections);
+  } catch (error) {
+    console.error(
+      'Error fetching pending connections for student: ',
+      JSON.stringify(error, null, 2),
+    );
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get all approved connections for a student
+const getStudentApprovedConnections = async (req, res) => {
+  try {
+    const { studentId } = req.query;
+
+    if (!studentId) {
+      return res.status(400).json({ error: 'Student ID is required' });
+    }
+
+    const connections = await Connection.find({ studentId, status: 'Approved' })
+      .populate({
+        path: 'mentorId',
+        model: Mentor, // Directly use the imported Mentor model
+        select: 'firstname lastname email profilePic university expertise degree yearsOfExperience',
+      })
+      .lean();
+
+    res.status(200).json(connections);
+  } catch (error) {
+    console.error(
+      'Error fetching approved connections for student: ',
+      JSON.stringify(error, null, 2),
+    );
+    res.status(500).json({ error: error.message });
+  }
+};
 
 // Delete a connection by ID
 const deleteConnection = async (req, res) => {
@@ -283,14 +292,14 @@ const deleteConnection = async (req, res) => {
       await Mentor.findByIdAndUpdate(
         mentorId,
         { $pull: { connectedStudents: studentId } },
-        { new: true }
+        { new: true },
       );
 
       // Remove mentor from student's connectedMentors list
       await Student.findByIdAndUpdate(
         studentId,
         { $pull: { connectedMentors: mentorId } },
-        { new: true }
+        { new: true },
       );
     }
 
@@ -300,7 +309,9 @@ const deleteConnection = async (req, res) => {
     res.status(200).json({ message: 'Connection deleted successfully' });
   } catch (error) {
     console.error('Error deleting connection:', error);
-    res.status(500).json({ error: error.message || 'An error occurred while deleting the connection' });
+    res
+      .status(500)
+      .json({ error: error.message || 'An error occurred while deleting the connection' });
   }
 };
 
