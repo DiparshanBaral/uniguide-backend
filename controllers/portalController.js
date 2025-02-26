@@ -3,7 +3,8 @@ const { Portal } = require('../models/portalModel');
 // Add a task to the portal
 const addTask = async (req, res) => {
   try {
-    const { portalId, title, description, dueDate } = req.body;
+    const { portalId } = req.params;
+    const { title, description, dueDate } = req.body;
 
     // Validate required fields
     if (!portalId || !title || !description || !dueDate) {

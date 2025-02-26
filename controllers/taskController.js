@@ -62,35 +62,8 @@ const addDefaultTasksByCountry = async (req, res) => {
   }
 };
 
-const getTasksByCountry = async (req, res) => {
-  try {
-    const { country } = req.query;
-
-    // Validate country
-    if (!country || !['US', 'UK', 'Canada', 'Australia'].includes(country)) {
-      return res.status(400).json({ error: 'Invalid or missing country' });
-    }
-
-    // Fetch tasks for the specified country
-    const tasks = await Task.find({ country }).lean();
-
-
-    // Ensure tasks are not empty
-    if (!tasks || tasks.length === 0) {
-      return res.status(404).json({ error: 'No tasks found for the specified country' });
-    }
-
-    // Return tasks as they are, without taskStatus
-    res.status(200).json(tasks);
-  } catch (error) {
-    console.error('Error fetching tasks:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
 
 module.exports = {
   createTask,
-  getTasksByCountry,
   addDefaultTasksByCountry,
 };
