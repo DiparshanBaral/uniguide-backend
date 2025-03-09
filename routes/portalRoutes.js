@@ -5,7 +5,7 @@ const {
   uploadDocument,
   deleteTask,
   updateTask,
-  getAllTasks
+  getAllTasks,
 } = require('../controllers/portalController');
 const { protect, protectMentorRoute, protectStudentRoute } = require('../middleware/authMiddleware');
 
