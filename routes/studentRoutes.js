@@ -27,7 +27,7 @@ router.put('/:id', protect, uploadProfilePic.single('profilePic'), updateStudent
 // Delete Student by ID
 // router.delete('/:id', deleteStudentById);
 
-// Get Public Student Profile (accessible to students and mentors)
+// Public Routes
 router.get('/public/:id', protect, getPublicStudentProfile);
 
 router.post('/wishlist', protect, addToWishlist);

@@ -164,7 +164,10 @@ const deleteStudentById = async (req, res) => {
 // Fetch public student profile (accessible to mentors and other students)
 const getPublicStudentProfile = async (req, res) => {
   try {
-    const student = await Student.findById(req.params.id).select(
+    const { id } = req.params; // Extract student ID from URL params
+
+    // Fetch the student's public profile details
+    const student = await Student.findById(id).select(
       'firstname lastname profilePic bio major targetedUniversities',
     );
 
