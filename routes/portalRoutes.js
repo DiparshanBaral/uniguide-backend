@@ -6,6 +6,7 @@ const {
   deleteTask,
   updateTask,
   getAllTasks,
+  getPortalById,
 } = require('../controllers/portalController');
 const { protect, protectMentorRoute, protectStudentRoute } = require('../middleware/authMiddleware');
 
@@ -28,5 +29,8 @@ router.post('/:portalId/documents', protect, protectMentorRoute, uploadDocument)
 
 // Delete a task from the portal
 router.delete('/task/delete', protect, protectMentorRoute, deleteTask);
+
+// NEW ROUTE: Get a specific portal by ID
+router.get('/:portalId', protect, getPortalById);
 
 module.exports = router;

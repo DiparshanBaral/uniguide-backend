@@ -1,4 +1,43 @@
 const { Portal } = require('../models/portalModel');
+const { Student } = require('../models/studentModel');
+const { Mentor } = require('../models/mentorModel');
+
+// Get a specific portal by ID with populated student/mentor details
+const getPortalById = async (req, res) => {
+  try {
+    const { portalId } = req.params; // Extract portalId from URL params
+
+    // Validate portalId
+    if (!portalId) {
+      return res.status(400).json({ error: 'Portal ID is required' });
+    }
+
+    // Find the portal and populate studentId and mentorId
+    const portal = await Portal.findById(portalId)
+      .populate({
+        path: 'studentId',
+        model: Student,
+        select: 'firstname lastname email profilePic major bio', // Adjust fields as needed
+      })
+      .populate({
+        path: 'mentorId',
+        model: Mentor,
+        select: 'firstname lastname email profilePic university expertise', // Adjust fields as needed
+      })
+      .lean();
+
+    // Check if portal exists
+    if (!portal) {
+      return res.status(404).json({ error: 'Portal not found' });
+    }
+
+    // Return the portal data
+    res.status(200).json(portal);
+  } catch (error) {
+    console.error('Error fetching portal:', error);
+    res.status(500).json({ error: error.message || 'Failed to retrieve portal' });
+  }
+};
 
 // Add a task to the portal
 const addTask = async (req, res) => {
@@ -190,4 +229,5 @@ module.exports = {
   deleteTask,
   getAllTasks,
   updateTask,
+  getPortalById,
 };
