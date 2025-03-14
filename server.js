@@ -12,20 +12,19 @@ const app = express();
 app.use(express.json());
 
 // CORS Configuration
-const allowedOrigins = ['http://localhost:5173']; // Add your frontend origin here
+const allowedOrigins = ['http://localhost:5173'];
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true); // Allow the request
+      callback(null, true); 
     } else {
-      callback(new Error('Not allowed by CORS')); // Block the request
+      callback(new Error('Not allowed by CORS')); 
     }
   },
-  credentials: true, // Allow credentials (e.g., cookies, authorization headers)
+  credentials: true,
 };
 app.use(cors(corsOptions));
 
-// Preflight Request Handling (Optional)
 app.options('*', cors(corsOptions)); // Automatically handle preflight requests for all routes
 
 // Import routes
@@ -37,6 +36,7 @@ const affiliationRoutes = require('./routes/affiliationRoutes');
 const connectionRoutes = require('./routes/connectionRoutes');
 const portalRoutes = require('./routes/portalRoutes');
 const taskRoutes = require('./routes/taskRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -47,6 +47,7 @@ app.use('/affiliations', affiliationRoutes);
 app.use('/connections', connectionRoutes);
 app.use('/portal', portalRoutes);
 app.use('/tasks', taskRoutes);
+app.use('/chat', chatRoutes);
 
 // Default route
 app.get('/', (req, res) => {
@@ -56,3 +57,6 @@ app.get('/', (req, res) => {
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Start WebSocket Server
+require('./websocketServer');

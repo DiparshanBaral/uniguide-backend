@@ -1,179 +1,106 @@
-const Chat = require("../models/chat.model");
-const User = require("../models/user.model"); // Assuming you have a User model for fetching user info
+// controllers/chatController.js
+const { Chat } = require('../models/chatModel');
 
-// ✅ Send Message
-const sendMessage = async (req, res) => {
-  const { receiverId, message } = req.body;
-  console.log("Received sendMessage request:", { receiverId, message });
-
-  if (!receiverId || !message) {
-    console.error("Invalid request: Missing receiverId or message");
-    return res
-      .status(400)
-      .json({ success: false, message: "Receiver and message are required." });
-  }
-
+// Get chat history between two users
+const getChatHistory = async (req, res) => {
   try {
-    const newMessage = new Chat({
-      senderId: req.user._id,
-      receiverId,
-      message,
-      messageType: "text",
-    });
+    const { userId, userRole, otherUserId, otherUserRole } = req.query;
 
-    const savedMessage = await newMessage.save();
-    console.log("Message saved to database:", savedMessage);
+    if (!userId || !userRole || !otherUserId || !otherUserRole) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
 
-    res
-      .status(201)
-      .json({ success: true, message: "Message sent!", data: savedMessage });
-  } catch (error) {
-    console.error("Error saving message:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Error sending message",
-      error: error.message,
-    });
-  }
-};
-
-// ✅ Get Chat Messages Between Two Users
-const getMessages = async (req, res) => {
-  try {
-    const { receiverId, senderId } = req.params;
-
-    // Define the search query
-    const query = {
+    const messages = await Chat.find({
       $or: [
-        {
-          $and: [{ senderId: senderId }, { receiverId: receiverId }],
-        },
-        {
-          $and: [{ senderId: receiverId }, { receiverId: senderId }],
-        },
+        { senderId: userId, senderRole: userRole, receiverId: otherUserId, receiverRole: otherUserRole },
+        { senderId: otherUserId, senderRole: otherUserRole, receiverId: userId, receiverRole: userRole },
       ],
-    };
+    }).sort({ createdAt: 1 });
 
-    const messages = await Chat.find(query)
-      .sort({ createdAt: -1 }) // Sort by creation date, descending order (newest first)
-      .limit(50) // Optional: Limit the number of messages fetched
-      .exec();
-
-    // Check if messages exist
-    if (messages.length === 0) {
-      return res.status(404).json({ message: "No messages found" });
-    }
-
-    // Return the fetched messages
-    return res.status(200).json({ success: true, messages });
+    res.status(200).json({ messages });
   } catch (error) {
-    console.error("Error in getMessages controller:", error);
-    return res
-      .status(500)
-      .json({ message: "Error fetching messages", error: error.message });
+    console.error('Error fetching chat history:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
-// ✅ Mark a Message as Read
-const markAsRead = async (req, res) => {
-  const { messageId } = req.params;
+// Send a new message
+const sendMessage = async (req, res) => {
   try {
-    const message = await Chat.findById(messageId);
-    if (!message) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Message not found." });
+    const { senderId, senderRole, receiverId, receiverRole, content } = req.body;
+
+    if (!senderId || !senderRole || !receiverId || !receiverRole || !content) {
+      return res.status(400).json({ error: 'All fields are required' });
     }
-    message.isRead = true;
-    await message.save();
-    res.status(200).json({ success: true, message: "Message marked as read." });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error updating message",
-      error: error.message,
+
+    const newMessage = new Chat({
+      senderId,
+      senderRole,
+      receiverId,
+      receiverRole,
+      message: content,
     });
+
+    await newMessage.save();
+    res.status(201).json({ message: 'Message sent successfully', newMessage });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
-// ✅ Delete (Soft Delete) a Message
+// Mark messages as read
+const markMessagesAsRead = async (req, res) => {
+  try {
+    const { userId, userRole, otherUserId, otherUserRole } = req.body;
+
+    if (!userId || !userRole || !otherUserId || !otherUserRole) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    await Chat.updateMany(
+      {
+        senderId: otherUserId,
+        senderRole: otherUserRole,
+        receiverId: userId,
+        receiverRole: userRole,
+        read: false,
+      },
+      { read: true }
+    );
+
+    res.status(200).json({ message: 'Messages marked as read' });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Delete a message
 const deleteMessage = async (req, res) => {
-  const { messageId } = req.params;
-  const userId = req.user._id;
-
   try {
-    const message = await Chat.findById(messageId);
+    const { messageId } = req.params;
 
-    if (!message) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Message not found." });
+    if (!messageId) {
+      return res.status(400).json({ error: 'Message ID is required' });
     }
 
-    if (message.senderId.toString() === userId.toString()) {
-      message.deletedBySender = true;
-    } else if (message.receiverId.toString() === userId.toString()) {
-      message.deletedByReceiver = true;
-    } else {
-      return res.status(403).json({
-        success: false,
-        message: "Unauthorized to delete this message.",
-      });
+    const deletedMessage = await Chat.findByIdAndDelete(messageId);
+
+    if (!deletedMessage) {
+      return res.status(404).json({ error: 'Message not found' });
     }
 
-    await message.save();
-    res.status(200).json({ success: true, message: "Message deleted." });
+    res.status(200).json({ message: 'Message deleted successfully' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error deleting message",
-      error: error.message,
-    });
-  }
-};
-
-// ✅ Get List of Conversations (Recent Chats)
-const getConversations = async (req, res) => {
-  const userId = req.user._id;
-
-  try {
-    const conversations = await Chat.aggregate([
-      {
-        $match: {
-          $or: [{ senderId: userId }, { receiverId: userId }],
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $cond: {
-              if: { $eq: ["$senderId", userId] },
-              then: "$receiverId",
-              else: "$senderId",
-            },
-          },
-          lastMessage: { $last: "$message" },
-          lastMessageTime: { $last: "$createdAt" },
-          isRead: { $last: "$isRead" },
-        },
-      },
-      { $sort: { lastMessageTime: -1 } },
-    ]);
-
-    res.status(200).json({ success: true, conversations });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching conversations",
-      error: error.message,
-    });
+    console.error('Error deleting message:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 module.exports = {
+  getChatHistory,
   sendMessage,
-  getMessages,
-  markAsRead,
+  markMessagesAsRead,
   deleteMessage,
-  getConversations,
 };

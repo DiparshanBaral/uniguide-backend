@@ -1,40 +1,40 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const chatSchema = new mongoose.Schema(
   {
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      refPath: 'senderRole', // Dynamically references either 'Student' or 'Mentor'
+      required: true,
+    },
+    senderRole: {
+      type: String,
+      enum: ['Student', 'Mentor'],
       required: true,
     },
     receiverId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      refPath: 'receiverRole', // Dynamically references either 'Student' or 'Mentor'
       required: true,
     },
-    message: { type: String, required: true },
-    messageType: {
+    receiverRole: {
       type: String,
-      enum: ["text", "image", "file"],
-      default: "text",
-    }, // Supports media
-    fileUrl: { type: String },
-    isRead: { type: Boolean, default: false },
-    deletedBySender: { type: Boolean, default: false },
-    deletedByReceiver: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now },
+      enum: ['Student', 'Mentor'],
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+    read: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
-// Pre-save middleware to set isRead to false on message creation
-chatSchema.pre("save", function (next) {
-  if (this.isNew) {
-    this.isRead = false;
-  }
-  next();
-});
+const db = mongoose.connection.useDb('Users');
+const Chat = db.model('Chat', chatSchema, 'Chats');
 
-const usersDb  = mongoose.connection.useDb('Users');
-const Chat = usersDb.model("Chat", chatSchema);
-module.exports = Chat;
+module.exports = { Chat };
