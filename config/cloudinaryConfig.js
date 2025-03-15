@@ -42,10 +42,24 @@ const universityImageStorage = new CloudinaryStorage({
   },
 });
 
+// Multer storage configuration for documents
+const documentStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "documents", // Folder for documents
+    allowed_formats: ["pdf", "doc", "docx", "jpg", "jpeg", "png"], // Allowed formats
+    resource_type: "auto", // Let Cloudinary decide the best type
+    access_mode: "public", // Ensures files are publicly accessible
+  },
+});
+
 const upload = multer({ storage }); // Multer upload middleware
 
 const uploadProfilePic = multer({ storage: profilePicStorage }); //Multer profile pic upload middleware
 
 const uploadUniversityImage = multer({ storage: universityImageStorage });// Multer university image upload middleware
 
-module.exports = { upload, uploadProfilePic, uploadUniversityImage, cloudinary };
+const uploadDocuments = multer({ storage: documentStorage }); // Multer document upload middleware
+
+
+module.exports = { upload, uploadProfilePic, uploadUniversityImage, cloudinary, uploadDocuments };
