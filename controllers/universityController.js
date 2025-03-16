@@ -14,7 +14,7 @@ const addUniversity = async (req, res) => {
     let university;
 
     // Ensure the correct schema is being selected based on the country
-    switch (country) {
+    switch (country.toLowerCase()) {
       case 'US':
         university = new USUniversity({
           country, name, location, ranking, coursesOffered, contact, website, description, tuitionFee, acceptanceRate, graduationRate
@@ -194,5 +194,113 @@ const updateUniversityById = async (req, res) => {
   }
 };
 
+// Real-time search suggestions
+const searchUniversities = async (req, res) => {
+  const { query, country } = req.query;
 
-module.exports = { addUniversity, getUniversityById, getUniversitiesByCountry, deleteUniversityById, updateUniversityById };
+  // Log the incoming request parameters
+  console.log('Received search request with query:', query, 'and country:', country);
+
+  // Validate the query parameter
+  if (!query || query.trim() === '') {
+    console.log('No query provided. Returning empty array.');
+    return res.status(200).json([]); // Return an empty array if no query is provided
+  }
+
+  try {
+    // Normalize the country parameter to lowercase and trim whitespace
+    const trimmedCountry = country?.trim().toLowerCase();
+
+    // Log the normalized country value
+    console.log('Normalized country:', trimmedCountry);
+
+    // Define a regex pattern for case-insensitive partial matching
+    const regexPattern = new RegExp(query.trim(), 'i');
+
+    let results = [];
+    if (trimmedCountry) {
+      // Validate the country parameter
+      switch (trimmedCountry) {
+        case 'us':
+          console.log('Searching in US universities...');
+          results = await USUniversity.find({ name: regexPattern }, 'name country').limit(5);
+          break;
+        case 'uk':
+          console.log('Searching in UK universities...');
+          results = await UKUniversity.find({ name: regexPattern }, 'name country').limit(5);
+          break;
+        case 'canada':
+          console.log('Searching in Canada universities...');
+          results = await CanadaUniversity.find({ name: regexPattern }, 'name country').limit(5);
+          break;
+        case 'australia':
+          console.log('Searching in Australia universities...');
+          results = await AustraliaUniversity.find({ name: regexPattern }, 'name country').limit(5);
+          break;
+        default:
+          console.error(`Invalid country received: ${trimmedCountry}`);
+          return res.status(400).json({ message: 'Invalid country' });
+      }
+    } else {
+      // If no country is specified, search across all collections
+      console.log('No country specified. Searching across all countries...');
+      const allResults = await Promise.all([
+        USUniversity.find({ name: regexPattern }, 'name country').limit(5),
+        UKUniversity.find({ name: regexPattern }, 'name country').limit(5),
+        CanadaUniversity.find({ name: regexPattern }, 'name country').limit(5),
+        AustraliaUniversity.find({ name: regexPattern }, 'name country').limit(5),
+      ]);
+      results = allResults.flat();
+    }
+
+    // Log the search results
+    console.log('Search results:', results);
+
+    // Limit the combined results to at most 5 universities
+    const limitedResults = results.slice(0, 5);
+
+    res.status(200).json(limitedResults);
+  } catch (error) {
+    console.error('Error searching universities:', error);
+    res.status(500).json({ message: 'Error searching universities', error });
+  }
+};
+
+// Full Search Functionality (For "Find Universities" Button)
+const findUniversities = async (req, res) => {
+  try {
+    const { query } = req.query; // Get the search query from the request
+    if (!query || query.trim() === '') {
+      return res.status(200).json([]); // Return an empty array if no query is provided
+    }
+
+    // Define a regex pattern for case-insensitive partial matching
+    const regexPattern = new RegExp(query.trim(), 'i');
+
+    // Search across all countries' universities
+    const results = await Promise.all([
+      USUniversity.find({ name: regexPattern }),
+      UKUniversity.find({ name: regexPattern }),
+      CanadaUniversity.find({ name: regexPattern }),
+      AustraliaUniversity.find({ name: regexPattern }),
+    ]);
+
+    // Flatten the results into a single array
+    const universities = results.flat();
+
+    res.status(200).json(universities);
+  } catch (error) {
+    console.error('Error finding universities:', error);
+    res.status(500).json({ message: 'Error finding universities', error });
+  }
+};
+
+module.exports = {
+  addUniversity,
+  getUniversityById,
+  getUniversitiesByCountry,
+  deleteUniversityById,
+  updateUniversityById,
+  searchUniversities,
+  findUniversities,
+};

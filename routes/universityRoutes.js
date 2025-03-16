@@ -1,5 +1,12 @@
 const express = require('express');
-const { addUniversity, getUniversityById, getUniversitiesByCountry, deleteUniversityById, updateUniversityById } = require('../controllers/universityController');
+const { addUniversity, 
+    getUniversityById, 
+    getUniversitiesByCountry, 
+    deleteUniversityById, 
+    updateUniversityById,
+    searchUniversities,
+    findUniversities,   
+} = require('../controllers/universityController');
 const router = express.Router();
 const { uploadUniversityImage } = require('../config/cloudinaryConfig');
 
@@ -17,5 +24,11 @@ router.delete('/:id', deleteUniversityById);
 
 // Route to update a university by ID (supports image upload)
 router.put('/:country/:id', uploadUniversityImage.single('image'), updateUniversityById);
+
+// New Route: Real-time search suggestions
+router.get('/search', searchUniversities);
+
+// New Route: Full search for "Find Universities" button
+router.get('/find', findUniversities);
 
 module.exports = router;
