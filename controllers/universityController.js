@@ -196,14 +196,10 @@ const updateUniversityById = async (req, res) => {
 
 // Real-time search suggestions
 const searchUniversities = async (req, res) => {
-  const { query, country } = req.query;
-
-  // Log the incoming request parameters
-  console.log('Received search request with query:', query, 'and country:', country);
+  const { query, country } = req.body;
 
   // Validate the query parameter
   if (!query || query.trim() === '') {
-    console.log('No query provided. Returning empty array.');
     return res.status(200).json([]); // Return an empty array if no query is provided
   }
 
@@ -211,39 +207,36 @@ const searchUniversities = async (req, res) => {
     // Normalize the country parameter to lowercase and trim whitespace
     const trimmedCountry = country?.trim().toLowerCase();
 
-    // Log the normalized country value
-    console.log('Normalized country:', trimmedCountry);
+    // Define valid countries
+    const validCountries = ['us', 'uk', 'canada', 'australia'];
+
+    // Validate the country parameter
+    if (trimmedCountry && !validCountries.includes(trimmedCountry)) {
+      console.error(`Invalid country received: ${trimmedCountry}`);
+      return res.status(400).json({ message: 'Invalid country. Please choose from: us, uk, canada, australia' });
+    }
 
     // Define a regex pattern for case-insensitive partial matching
     const regexPattern = new RegExp(query.trim(), 'i');
 
     let results = [];
     if (trimmedCountry) {
-      // Validate the country parameter
       switch (trimmedCountry) {
         case 'us':
-          console.log('Searching in US universities...');
           results = await USUniversity.find({ name: regexPattern }, 'name country').limit(5);
           break;
         case 'uk':
-          console.log('Searching in UK universities...');
           results = await UKUniversity.find({ name: regexPattern }, 'name country').limit(5);
           break;
         case 'canada':
-          console.log('Searching in Canada universities...');
           results = await CanadaUniversity.find({ name: regexPattern }, 'name country').limit(5);
           break;
         case 'australia':
-          console.log('Searching in Australia universities...');
           results = await AustraliaUniversity.find({ name: regexPattern }, 'name country').limit(5);
           break;
-        default:
-          console.error(`Invalid country received: ${trimmedCountry}`);
-          return res.status(400).json({ message: 'Invalid country' });
       }
     } else {
       // If no country is specified, search across all collections
-      console.log('No country specified. Searching across all countries...');
       const allResults = await Promise.all([
         USUniversity.find({ name: regexPattern }, 'name country').limit(5),
         UKUniversity.find({ name: regexPattern }, 'name country').limit(5),
@@ -253,45 +246,97 @@ const searchUniversities = async (req, res) => {
       results = allResults.flat();
     }
 
-    // Log the search results
-    console.log('Search results:', results);
-
     // Limit the combined results to at most 5 universities
     const limitedResults = results.slice(0, 5);
 
     res.status(200).json(limitedResults);
   } catch (error) {
     console.error('Error searching universities:', error);
-    res.status(500).json({ message: 'Error searching universities', error });
+    res.status(500).json({ message: 'Error searching universities', error: error.message });
   }
 };
 
 // Full Search Functionality (For "Find Universities" Button)
 const findUniversities = async (req, res) => {
   try {
-    const { query } = req.query; // Get the search query from the request
+    const { query, country, fieldOfStudy, budgetRange } = req.body; // Extract parameters from the body
+
+    // Validate the query parameter
     if (!query || query.trim() === '') {
       return res.status(200).json([]); // Return an empty array if no query is provided
+    }
+
+    // Normalize the country parameter to lowercase and trim whitespace
+    const trimmedCountry = country?.trim().toLowerCase();
+
+    // Define valid countries
+    const validCountries = ['us', 'uk', 'canada', 'australia'];
+
+    // Validate the country parameter
+    if (trimmedCountry && !validCountries.includes(trimmedCountry)) {
+      console.error(`Invalid country received: ${trimmedCountry}`);
+      return res.status(400).json({ message: 'Invalid country. Please choose from: us, uk, canada, australia' });
     }
 
     // Define a regex pattern for case-insensitive partial matching
     const regexPattern = new RegExp(query.trim(), 'i');
 
-    // Search across all countries' universities
-    const results = await Promise.all([
-      USUniversity.find({ name: regexPattern }),
-      UKUniversity.find({ name: regexPattern }),
-      CanadaUniversity.find({ name: regexPattern }),
-      AustraliaUniversity.find({ name: regexPattern }),
-    ]);
+    // Build the filter object
+    const filter = { name: regexPattern };
 
-    // Flatten the results into a single array
-    const universities = results.flat();
+    // Add field of study filter if provided
+    if (fieldOfStudy) {
+      filter.coursesOffered = { $in: [fieldOfStudy] }; // Check if the field of study exists in coursesOffered
+    }
 
-    res.status(200).json(universities);
+    // Add budget range filter if provided
+    if (budgetRange) {
+      switch (budgetRange) {
+        case 'low':
+          filter['tuitionFee.undergraduate'] = { $lte: 20000 }; // Undergraduate tuition <= $20k
+          break;
+        case 'medium':
+          filter['tuitionFee.undergraduate'] = { $gt: 20000, $lte: 35000 }; // $20k < Undergraduate tuition <= $35k
+          break;
+        case 'high':
+          filter['tuitionFee.undergraduate'] = { $gt: 35000 }; // Undergraduate tuition > $35k
+          break;
+        default:
+          break;
+      }
+    }
+
+    let results = [];
+    if (trimmedCountry) {
+      switch (trimmedCountry) {
+        case 'us':
+          results = await USUniversity.find(filter).limit(6);
+          break;
+        case 'uk':
+          results = await UKUniversity.find(filter).limit(6);
+          break;
+        case 'canada':
+          results = await CanadaUniversity.find(filter).limit(6);
+          break;
+        case 'australia':
+          results = await AustraliaUniversity.find(filter).limit(6);
+          break;
+      }
+    } else {
+      // If no country is specified, search across all collections
+      const allResults = await Promise.all([
+        USUniversity.find(filter).limit(6),
+        UKUniversity.find(filter).limit(6),
+        CanadaUniversity.find(filter).limit(6),
+        AustraliaUniversity.find(filter).limit(6),
+      ]);
+      results = allResults.flat();
+    }
+
+    res.status(200).json(results);
   } catch (error) {
     console.error('Error finding universities:', error);
-    res.status(500).json({ message: 'Error finding universities', error });
+    res.status(500).json({ message: 'Error finding universities', error: error.message });
   }
 };
 

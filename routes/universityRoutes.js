@@ -26,9 +26,9 @@ router.delete('/:id', deleteUniversityById);
 router.put('/:country/:id', uploadUniversityImage.single('image'), updateUniversityById);
 
 // New Route: Real-time search suggestions
-router.get('/search', searchUniversities);
+router.post('/search', searchUniversities);
 
 // New Route: Full search for "Find Universities" button
-router.get('/find', findUniversities);
+router.post('/find', findUniversities);
 
 module.exports = router;
