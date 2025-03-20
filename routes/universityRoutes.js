@@ -5,7 +5,8 @@ const { addUniversity,
     deleteUniversityById, 
     updateUniversityById,
     searchUniversities,
-    findUniversities,   
+    findUniversities,
+    takeSurvey,  
 } = require('../controllers/universityController');
 const router = express.Router();
 const { uploadUniversityImage } = require('../config/cloudinaryConfig');
@@ -30,5 +31,8 @@ router.post('/search', searchUniversities);
 
 // New Route: Full search for "Find Universities" button
 router.post('/find', findUniversities);
+
+// POST route for submitting the survey
+router.post('/survey', takeSurvey);
 
 module.exports = router;

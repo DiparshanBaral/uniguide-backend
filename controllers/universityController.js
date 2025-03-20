@@ -340,6 +340,86 @@ const findUniversities = async (req, res) => {
   }
 };
 
+// Controller to handle the survey submission
+const takeSurvey = async (req, res) => {
+  try {
+    const {
+      country,
+      fieldOfStudy,
+      budgetRange,
+      acceptanceRateRange,
+      graduationRateRange,
+    } = req.body;
+
+    // Validate required fields
+    if (!country || !fieldOfStudy || !budgetRange) {
+      return res.status(400).json({ message: 'Missing required survey fields' });
+    }
+
+    // Normalize inputs
+    const trimmedCountry = country.trim().toLowerCase();
+    const validCountries = ['us', 'uk', 'canada', 'australia'];
+
+    if (!validCountries.includes(trimmedCountry)) {
+      return res.status(400).json({ message: 'Invalid country specified' });
+    }
+
+    // Build the filter object
+    const filter = {
+      coursesOffered: { $in: [fieldOfStudy] }, // Match field of study
+    };
+
+    // Add budget range filter
+    switch (budgetRange) {
+      case 'low':
+        filter['tuitionFee.undergraduate'] = { $lte: 20000 }; // Undergraduate tuition ≤ $20k
+        break;
+      case 'medium':
+        filter['tuitionFee.undergraduate'] = { $gt: 20000, $lte: 35000 }; // $20k < Undergraduate tuition ≤ $35k
+        break;
+      case 'high':
+        filter['tuitionFee.undergraduate'] = { $gt: 35000 }; // Undergraduate tuition > $35k
+        break;
+      default:
+        break;
+    }
+
+    // Add acceptance rate filter
+    if (acceptanceRateRange) {
+      const [minAcceptanceRate, maxAcceptanceRate] = acceptanceRateRange.split('-').map(Number);
+      filter.acceptanceRate = { $gte: minAcceptanceRate, $lte: maxAcceptanceRate };
+    }
+
+    // Add graduation rate filter
+    if (graduationRateRange) {
+      const [minGraduationRate, maxGraduationRate] = graduationRateRange.split('-').map(Number);
+      filter.graduationRate = { $gte: minGraduationRate, $lte: maxGraduationRate };
+    }
+
+    // Search universities based on the filter
+    let results = [];
+    switch (trimmedCountry) {
+      case 'us':
+        results = await USUniversity.find(filter).limit(6); // Limit to 6 results
+        break;
+      case 'uk':
+        results = await UKUniversity.find(filter).limit(6);
+        break;
+      case 'canada':
+        results = await CanadaUniversity.find(filter).limit(6);
+        break;
+      case 'australia':
+        results = await AustraliaUniversity.find(filter).limit(6);
+        break;
+    }
+
+    res.status(200).json(results);
+  } catch (error) {
+    console.error('Error processing survey:', error);
+    res.status(500).json({ message: 'Error processing survey', error: error.message });
+  }
+};
+
 module.exports = {
   addUniversity,
   getUniversityById,
@@ -348,4 +428,5 @@ module.exports = {
   updateUniversityById,
   searchUniversities,
   findUniversities,
+  takeSurvey,
 };
