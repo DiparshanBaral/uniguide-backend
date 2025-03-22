@@ -40,6 +40,7 @@ const portalRoutes = require('./routes/portalRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const documentRoutes = require('./routes/documentRoutes');
+const discussionRoutes = require('./routes/discussionRoutes');
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -52,6 +53,7 @@ app.use('/portal', portalRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/chat', chatRoutes);
 app.use('/document', documentRoutes);
+app.use('/discussion', discussionRoutes);
 
 // Default route
 app.get('/', (req, res) => {
