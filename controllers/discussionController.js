@@ -1,4 +1,5 @@
 const { DiscussionRoom } = require('../models/discussionModel');
+const { Room } = require('../models/roomModel');
 
 // Get all rooms
 exports.getAllRooms = async (req, res) => {
@@ -107,31 +108,36 @@ exports.deleteRoom = async (req, res) => {
 
 // Admin approves or rejects a room creation request
 exports.updateRoomStatus = async (req, res) => {
-    try {
-      const { id } = req.params; // Room ID
-      const { status } = req.body; // New status: 'approved' or 'rejected'
-  
-      // Validate the status value
-      if (!['approved', 'rejected'].includes(status)) {
-        return res.status(400).json({ success: false, message: 'Invalid status value. Must be "approved" or "rejected".' });
-      }
-  
-      // Find and update the room's status
-      const updatedRoom = await DiscussionRoom.findByIdAndUpdate(
-        id,
-        { status },
-        { new: true, runValidators: true }
-      );
-  
-      if (!updatedRoom) {
-        return res.status(404).json({ success: false, message: 'Room not found' });
-      }
-  
-      res.status(200).json({ success: true, data: updatedRoom });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+  try {
+    const { id } = req.params; // Room ID
+    const { status } = req.body; // New status: 'approved' or 'rejected'
+
+    // Validate the status value
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status value. Must be "approved" or "rejected".' });
     }
-  };
+
+    const updatedRoom = await DiscussionRoom.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedRoom) {
+      return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+
+    // If the room is approved, create it in the Room database
+    if (status === 'approved') {
+      const newRoom = new Room({ roomId: updatedRoom._id, posts: [] });
+      await newRoom.save();
+    }
+
+    res.status(200).json({ success: true, data: updatedRoom });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 // Get all pending rooms (Admin-only)
 exports.getPendingRooms = async (req, res) => {
