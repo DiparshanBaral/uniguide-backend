@@ -35,7 +35,7 @@ const postSchema = new mongoose.Schema(
     postdescription: { type: String, required: true },
     postauthor: {
       authorId: { type: String, required: true },
-      name: { type: String, required: true },
+      firstname: { type: String },
       avatar: { type: String, required: true },
     },
     upvotes: { type: Number, default: 0 },

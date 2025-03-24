@@ -51,7 +51,7 @@ exports.getPostsByAuthorId = async (req, res) => {
     }
 
     // Filter posts by postauthor.authorId
-    const postsByAuthor = room.posts.filter(post => post.postauthor.authorId === authorId);
+    const postsByAuthor = room.posts.filter((post) => post.postauthor.authorId === authorId);
 
     // Return the filtered posts (can be an empty array if no posts are found)
     res.status(200).json({ success: true, data: postsByAuthor });
@@ -63,57 +63,53 @@ exports.getPostsByAuthorId = async (req, res) => {
 // Create a new post
 exports.createPost = async (req, res) => {
   try {
+    console.log('Request Body:', req.body);
+
     const { roomId, posttitle, postdescription, postauthor } = req.body;
 
-    // Validate postauthor fields
-    if (!postauthor || !postauthor.authorId || !postauthor.name || !postauthor.avatar) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid postauthor data. Ensure authorId, name, and avatar are provided.',
-      });
+    // Validate required fields
+    if (!roomId || !posttitle || !postdescription || !postauthor) {
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Validate authorId against Student or Mentor models
-    const student = await Student.findById(postauthor.authorId);
-    const mentor = await Mentor.findById(postauthor.authorId);
-
-    if (!student && !mentor) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid authorId. The provided authorId does not match any student or mentor.',
-      });
+    if (!postauthor.authorId || !postauthor.firstname || !postauthor.avatar) {
+      return res.status(400).json({ message: 'Post author details are incomplete' });
     }
 
+    console.log('Post author after validation:', postauthor);
+
+    // Check if the room exists
     const room = await Room.findOne({ roomId });
-
     if (!room) {
-      return res.status(404).json({ success: false, message: 'Room not found' });
+      return res.status(404).json({ message: 'Room not found' });
     }
 
     // Generate a unique ObjectId for the postid
     const postid = new mongoose.Types.ObjectId();
 
-    // Create the new post object
+    // Create new post
     const newPost = {
-      postid: postid.toString(), // Convert ObjectId to string for consistency
+      postid: postid, // Generating a unique ID
       posttitle,
       postdescription,
-      postauthor,
+      postauthor: {
+        authorId: postauthor.authorId,
+        firstname: postauthor.firstname,
+        avatar: postauthor.avatar,
+      },
       upvotes: 0,
       downvotes: 0,
       comments: [],
     };
 
-    // Add the new post to the room's posts array
+    // Push new post into the room's posts array
     room.posts.push(newPost);
-
-    // Save the updated room
     await room.save();
 
-    // Return the newly created post
-    res.status(201).json({ success: true, data: newPost });
+    res.status(201).json({ message: 'Post created successfully', post: newPost });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Error creating post:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -128,7 +124,7 @@ exports.updatePost = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Room not found' });
     }
 
-    const post = room.posts.find(post => post.postid === postId);
+    const post = room.posts.find((post) => post.postid === postId);
 
     if (!post) {
       return res.status(404).json({ success: false, message: 'Post not found' });
@@ -156,7 +152,7 @@ exports.deletePost = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Room not found' });
     }
 
-    const postIndex = room.posts.findIndex(post => post.postid === postId);
+    const postIndex = room.posts.findIndex((post) => post.postid === postId);
 
     if (postIndex === -1) {
       return res.status(404).json({ success: false, message: 'Post not found' });

@@ -71,6 +71,7 @@ const loginMentor = async (req, res) => {
       firstname: mentor.firstname,
       lastname: mentor.lastname,
       email: mentor.email,
+      profilePic: mentor.profilePic,
       token,
     });
   } catch (error) {

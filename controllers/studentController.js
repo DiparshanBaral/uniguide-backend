@@ -85,6 +85,7 @@ const loginStudent = async (req, res) => {
       firstname: student.firstname,
       lastname: student.lastname,
       email: student.email,
+      profilePic: student.profilePic,
       token,
     });
   } catch (error) {
