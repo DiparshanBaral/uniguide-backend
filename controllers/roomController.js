@@ -37,11 +37,11 @@ exports.getAllRecentPosts = async (req, res) => {
   }
 };
 
-// Get posts by author ID
+// Get posts by author ID using query parameters
 exports.getPostsByAuthorId = async (req, res) => {
   try {
     const { roomId } = req.params; // Extract roomId from URL parameters
-    const { authorId } = req.body; // Extract authorId from request body
+    const { authorId } = req.query; // Extract authorId from query parameters
 
     // Find the room by roomId
     const room = await Room.findOne({ roomId });
@@ -63,25 +63,14 @@ exports.getPostsByAuthorId = async (req, res) => {
 // Create a new post
 exports.createPost = async (req, res) => {
   try {
-    console.log('Request Body:', req.body);
-
     const { roomId, posttitle, postdescription, postauthor } = req.body;
 
     // Validate required fields
     if (!roomId || !posttitle || !postdescription || !postauthor) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-
-    if (!postauthor.authorId || !postauthor.firstname || !postauthor.avatar) {
+    if (!postauthor.authorId || !postauthor.name || !postauthor.avatar) {
       return res.status(400).json({ message: 'Post author details are incomplete' });
-    }
-
-    console.log('Post author after validation:', postauthor);
-
-    // Check if the room exists
-    const room = await Room.findOne({ roomId });
-    if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
     }
 
     // Generate a unique ObjectId for the postid
@@ -89,12 +78,12 @@ exports.createPost = async (req, res) => {
 
     // Create new post
     const newPost = {
-      postid: postid, // Generating a unique ID
+      postid: postid.toString(), // Convert ObjectId to string for consistency
       posttitle,
       postdescription,
       postauthor: {
         authorId: postauthor.authorId,
-        firstname: postauthor.firstname,
+        name: postauthor.name,
         avatar: postauthor.avatar,
       },
       upvotes: 0,
@@ -102,9 +91,15 @@ exports.createPost = async (req, res) => {
       comments: [],
     };
 
-    // Push new post into the room's posts array
-    room.posts.push(newPost);
-    await room.save();
+    // Add new post to the room's posts array using $push
+    const result = await Room.updateOne(
+      { roomId },
+      { $push: { posts: newPost } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
 
     res.status(201).json({ message: 'Post created successfully', post: newPost });
   } catch (error) {
