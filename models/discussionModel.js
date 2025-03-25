@@ -22,6 +22,7 @@ const discussionRoomSchema = new mongoose.Schema(
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
     },
+    joinedUsers: [{ type: mongoose.Schema.Types.ObjectId }], // Generic ObjectId, no ref
   },
   { timestamps: true },
 );
@@ -29,5 +30,4 @@ const discussionRoomSchema = new mongoose.Schema(
 // Store the model in the Users database
 const db = mongoose.connection.useDb('Users');
 const DiscussionRoom = db.model('DiscussionRoom', discussionRoomSchema, 'DiscussionRooms');
-
 module.exports = { DiscussionRoom };

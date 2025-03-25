@@ -7,6 +7,8 @@ const {
   updateRoom,
   updateRoomStatus,
   deleteRoom,
+  joinRoom,
+  getJoinedRooms,
 } = require('../controllers/discussionController');
 const { protect, protectAdminRoute } = require('../middleware/authMiddleware')
 
@@ -32,5 +34,11 @@ router.put('/rooms/update/:id', protect, updateRoom);
 
 // Protected route to delete a room (requires authentication)
 router.delete('/:id', protect, deleteRoom);
+
+// Protected route to join a room
+router.post('/:roomId/join', protect, joinRoom);
+
+// Protected route to get all rooms joined by the user
+router.get('/joined', protect, getJoinedRooms);
 
 module.exports = router;
