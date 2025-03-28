@@ -3,10 +3,11 @@ const { Room } = require('../models/roomModel');
 const { Student } = require('../models/studentModel');
 const { Mentor } = require('../models/mentorModel');
 
-// Get all rooms
+// Get all rooms with status "approved"
 exports.getAllRooms = async (req, res) => {
   try {
-    const rooms = await DiscussionRoom.find();
+    // Filter rooms by status: "approved"
+    const rooms = await DiscussionRoom.find({ status: 'approved' });
     res.status(200).json({ success: true, data: rooms });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
