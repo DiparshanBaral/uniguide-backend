@@ -161,3 +161,126 @@ exports.deletePost = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Add a comment to a post
+exports.addComment = async (req, res) => {
+  try {
+    const { roomId, postId, commentcontent, commentauthor } = req.body;
+
+    // Validate required fields
+    if (!roomId || !postId || !commentcontent || !commentauthor) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    if (!commentauthor.name || !commentauthor.avatar) {
+      return res.status(400).json({ message: 'Comment author details are incomplete' });
+    }
+
+    // Generate a unique ObjectId for the commentid
+    const commentid = new mongoose.Types.ObjectId();
+
+    // Create new comment
+    const newComment = {
+      commentid: commentid.toString(), // Convert ObjectId to string for consistency
+      commentcontent,
+      commentauthor: {
+        name: commentauthor.name,
+        avatar: commentauthor.avatar,
+      },
+      commentupvotes: 0,
+      commentdownvotes: 0,
+      commenttimestamp: new Date(),
+      commentreplies: [],
+    };
+
+    // Add new comment to the post's comments array using $push
+    const result = await Room.updateOne(
+      { roomId, 'posts.postid': postId },
+      { $push: { 'posts.$.comments': newComment } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Room or Post not found' });
+    }
+
+    res.status(201).json({ message: 'Comment added successfully', comment: newComment });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Reply to a comment
+exports.replyToComment = async (req, res) => {
+  try {
+    const { roomId, postId, commentid, replycontent, replyauthor } = req.body;
+
+    // Validate required fields
+    if (!roomId || !postId || !commentid || !replycontent || !replyauthor) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    if (!replyauthor.name || !replyauthor.avatar) {
+      return res.status(400).json({ message: 'Reply author details are incomplete' });
+    }
+
+    // Generate a unique ObjectId for the replyid
+    const replyid = new mongoose.Types.ObjectId();
+
+    // Create new reply
+    const newReply = {
+      replyid: replyid.toString(), // Convert ObjectId to string for consistency
+      replycontent,
+      replyauthor: {
+        name: replyauthor.name,
+        avatar: replyauthor.avatar,
+      },
+      replyupvotes: 0,
+      replydownvotes: 0,
+      replytimestamp: new Date(),
+    };
+
+    // Add new reply to the comment's replies array using $push
+    const result = await Room.updateOne(
+      { roomId, 'posts.postid': postId, 'posts.comments.commentid': commentid },
+      { $push: { 'posts.$[post].comments.$[comment].commentreplies': newReply } },
+      {
+        arrayFilters: [
+          { 'post.postid': postId },
+          { 'comment.commentid': commentid },
+        ],
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Room, Post, or Comment not found' });
+    }
+
+    res.status(201).json({ message: 'Reply added successfully', reply: newReply });
+  } catch (error) {
+    console.error('Error replying to comment:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Get all comments for a post
+exports.getCommentsForPost = async (req, res) => {
+  try {
+    const { roomId, postId } = req.params;
+
+    // Find the room by roomId
+    const room = await Room.findOne({ roomId });
+    if (!room) {
+      return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+
+    // Find the post by postId
+    const post = room.posts.find((post) => post.postid === postId);
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+
+    // Return the comments for the post
+    res.status(200).json({ success: true, data: post.comments });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

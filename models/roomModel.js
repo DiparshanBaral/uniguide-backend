@@ -24,7 +24,7 @@ const commentSchema = new mongoose.Schema({
   commentupvotes: { type: Number, default: 0 },
   commentdownvotes: { type: Number, default: 0 },
   commenttimestamp: { type: Date, default: Date.now },
-  commentreplies: [replySchema], // Nested replies
+  commentreplies: [replySchema], default: [] // Nested replies
 });
 
 // Post Schema
@@ -40,7 +40,7 @@ const postSchema = new mongoose.Schema(
     },
     upvotes: { type: Number, default: 0 },
     downvotes: { type: Number, default: 0 },
-    comments: [commentSchema], // Nested comments
+    comments: [commentSchema], default: []
   },
   { timestamps: true },
 );

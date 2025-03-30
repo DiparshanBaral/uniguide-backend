@@ -22,4 +22,13 @@ router.put('/update/post', protect, roomController.updatePost);
 // Delete a post
 router.delete('/delete/post', protect, roomController.deletePost);
 
+// Add a comment to a post
+router.post('/add/comment', protect, roomController.addComment);
+
+// Reply to a comment
+router.post('/reply/comment', protect, roomController.replyToComment);
+
+// Get all comments for a post
+router.get('/comments/:roomId/:postId', protect, roomController.getCommentsForPost);
+
 module.exports = router;
