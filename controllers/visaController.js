@@ -7,13 +7,20 @@ exports.getAllVisaExperiences = async (req, res) => {
     const visas = await Visa.find({}, 'country flag experiences');
     const allExperiences = visas.flatMap((visa) =>
       visa.experiences.map((exp) => ({
+        postid: exp.postid,
         country: visa.country,
         flag: visa.flag,
         title: exp.title,
         excerpt: exp.excerpt,
-        authorName: exp.author.name,
-        avatar: exp.author.avatar,
+        author: {
+          authorId: exp.author.authorId,
+          name: exp.author.name,
+          avatar: exp.author.avatar
+        },
         date: exp.date,
+        likes: exp.likes,
+        createdAt: exp.createdAt,
+        updatedAt: exp.updatedAt
       }))
     );
     res.status(200).json(allExperiences);
@@ -159,13 +166,20 @@ exports.getAuthorPosts = async (req, res) => {
       visa.experiences
         .filter((exp) => exp.author.authorId === authorId)
         .map((exp) => ({
+          postid: exp.postid,
           country: visa.country,
           flag: visa.flag,
           title: exp.title,
           excerpt: exp.excerpt,
-          authorName: exp.author.name,
-          avatar: exp.author.avatar,
+          author: {
+            authorId: exp.author.authorId,
+            name: exp.author.name,
+            avatar: exp.author.avatar
+          },
           date: exp.date,
+          likes: exp.likes,
+          createdAt: exp.createdAt,
+          updatedAt: exp.updatedAt
         }))
     );
 
@@ -192,11 +206,15 @@ exports.getRecentExperiences = async (req, res) => {
         flag: visa.flag,
         title: exp.title,
         excerpt: exp.excerpt,
-        authorName: exp.author.name,
-        authorId: exp.author.authorId,
-        avatar: exp.author.avatar,
+        author: {
+          authorId: exp.author.authorId,
+          name: exp.author.name,
+          avatar: exp.author.avatar
+        },
         date: exp.date,
-        likes: exp.likes
+        likes: exp.likes,
+        createdAt: exp.createdAt,
+        updatedAt: exp.updatedAt
       }))
     );
     
@@ -241,10 +259,23 @@ exports.toggleLike = async (req, res) => {
     // Save the updated visa document
     await visa.save();
     
-    // Return the updated likes count
+    // Return the complete updated experience
+    const updatedExperience = {
+      postid: visa.experiences[experienceIndex].postid,
+      country: visa.country,
+      flag: visa.flag,
+      title: visa.experiences[experienceIndex].title,
+      excerpt: visa.experiences[experienceIndex].excerpt,
+      author: visa.experiences[experienceIndex].author,
+      date: visa.experiences[experienceIndex].date,
+      likes: visa.experiences[experienceIndex].likes,
+      createdAt: visa.experiences[experienceIndex].createdAt,
+      updatedAt: visa.experiences[experienceIndex].updatedAt
+    };
+    
     res.status(200).json({ 
       message: 'Post liked successfully',
-      likes: visa.experiences[experienceIndex].likes
+      experience: updatedExperience
     });
   } catch (error) {
     console.error('Error liking post:', error);
