@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 const { Room } = require('../models/roomModel');
-const { Student } = require('../models/studentModel');
-const { Mentor } = require('../models/mentorModel');
 
 // Get all posts sorted by upvotes (highest to lowest)
 exports.getAllPostsWithHighestUpvotes = async (req, res) => {

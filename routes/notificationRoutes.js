@@ -10,7 +10,7 @@ const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // Route to create a new notification
-router.post('/', protect, createNotification);
+router.post('/create', protect, createNotification);
 
 // Route to get all notifications for a user
 router.get('/:userId', protect, getNotificationsByUser);

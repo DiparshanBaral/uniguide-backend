@@ -10,7 +10,7 @@ const notificationSchema = new mongoose.Schema(
     },
     userRole: {
       type: String,
-      enum: ['Student', 'Mentor', 'Admin'], // Role of the user receiving the notification
+      enum: ['Student', 'Mentor'],
       required: true,
     },
     title: {
@@ -22,6 +22,16 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       required: true,
       maxlength: 500, // Limit the description length
+    },
+    link: {
+      type: String, // Optional field to store route details
+      validate: {
+        validator: function (v) {
+          return /^\/[a-zA-Z0-9/_-]*$/.test(v); // Ensure it's a valid route format
+        },
+        message: 'Invalid route format for link',
+      },
+      default: null, // Optional field
     },
     isRead: {
       type: Boolean,

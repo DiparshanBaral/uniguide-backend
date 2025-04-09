@@ -2,7 +2,8 @@ const { Connection } = require('../models/connectionModel');
 const { Student } = require('../models/studentModel');
 const { Mentor } = require('../models/mentorModel');
 const { Portal } = require('../models/portalModel');
-const { Task } = require('../models/taskModel')
+const { Task } = require('../models/taskModel');
+const { Notification } = require('../models/notificationModel');
 const {
   USUniversity,
   UKUniversity,
@@ -50,12 +51,22 @@ const applyForConnection = async (req, res) => {
     });
 
     await connection.save();
+
+    // Create a notification for the mentor
+    const notification = new Notification({
+      userId: mentorId,
+      userRole: 'Mentor',
+      title: 'New Connection Request',
+      description: 'A student has sent you a connection request.',
+      link: '/connections/pendingrequests',
+    });
+
+    await notification.save();
+
     res.status(201).json({ message: 'Connection request submitted successfully', connection });
   } catch (error) {
-    console.error('Error in applyForConnection: ', JSON.stringify(error, null, 2));
-    res
-      .status(500)
-      .json({ error: error.message || 'An error occurred during the connection process' });
+    console.error('Error in applyForConnection:', error.message);
+    res.status(500).json({ error: error.message || 'An error occurred during the connection process' });
   }
 };
 
@@ -84,6 +95,17 @@ const updateConnectionStatus = async (req, res) => {
     // If the request is approved, update the mentor's and student's connected lists
     if (status === 'Approved') {
       const { studentId, mentorId } = connection;
+
+      // Create a notification for the student
+      const notification = new Notification({
+        userId: studentId,
+        userRole: 'Student',
+        title: 'Connection Request Approved',
+        description: 'Your connection request has been approved by the mentor.',
+        link: '/studentdashboard',
+      });
+
+      await notification.save();
 
       // Fetch the mentor to get their university name
       const mentor = await Mentor.findById(mentorId);

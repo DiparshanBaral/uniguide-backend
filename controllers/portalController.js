@@ -1,6 +1,7 @@
 const { Portal } = require('../models/portalModel');
 const { Student } = require('../models/studentModel');
 const { Mentor } = require('../models/mentorModel');
+const { Notification } = require('../models/notificationModel');
 
 // Get a specific portal by ID with populated student/mentor details
 const getPortalById = async (req, res) => {
@@ -60,6 +61,17 @@ const addTask = async (req, res) => {
     portal.tasks.push({ title, description, dueDate });
     await portal.save();
 
+    // Create a notification for the student
+    const notification = new Notification({
+      userId: portal.studentId,
+      userRole: 'Student',
+      title: 'New Task Assigned',
+      description: `A new task titled "${title}" has been assigned to you.`,
+      link: `/studentportal/${portalId}`,
+    });
+
+    await notification.save();
+
     res.status(200).json({ message: 'Task added successfully', portal });
   } catch (error) {
     console.error('Error adding task:', error);
@@ -92,6 +104,17 @@ const updateTask = async (req, res) => {
     task.taskStatus = taskStatus || task.taskStatus;
 
     await portal.save();
+
+    // Create a notification for the student
+    const notification = new Notification({
+      userId: portal.studentId,
+      userRole: 'Student',
+      title: 'Task Updated',
+      description: `The task "${task.title}" has been updated by your mentor.`,
+      link: `/studentportal/${portalId}`,
+    });
+
+    await notification.save();
 
     res.status(200).json({ message: 'Task updated successfully', portal });
   } catch (error) {
@@ -151,6 +174,19 @@ const updateTaskStatus = async (req, res) => {
     task.taskStatus = taskStatus; // Change status to taskStatus
     await portal.save();
 
+    // Create a notification for the mentor if the task is marked as done
+    if (taskStatus === 'Completed') {
+      const notification = new Notification({
+        userId: portal.mentorId,
+        userRole: 'Mentor',
+        title: 'Task Completed',
+        description: `The task "${task.title}" has been marked as completed by the student.`,
+        link: `/mentorportal/${portalId}`,
+      });
+
+      await notification.save();
+    }
+
     res.status(200).json({ message: 'Task status updated successfully', portal });
   } catch (error) {
     console.error('Error updating task status:', error);
@@ -178,6 +214,17 @@ const uploadDocument = async (req, res) => {
     // Add the document
     portal.documents.push({ title, url, uploadedBy });
     await portal.save();
+
+    // Create a notification for the mentor
+    const notification = new Notification({
+      userId: portal.mentorId,
+      userRole: 'Mentor',
+      title: 'New Document Uploaded',
+      description: `A new document titled "${title}" has been uploaded by the student.`,
+      link: `/mentorportal/${portalId}`,
+    });
+
+    await notification.save();
 
     res.status(200).json({ message: 'Document uploaded successfully', portal });
   } catch (error) {

@@ -3,11 +3,11 @@ const { Notification } = require('../models/notificationModel');
 // Create a new notification
 const createNotification = async (req, res) => {
   try {
-    const { userId, userRole, title, description } = req.body;
+    const { userId, userRole, title, description, link } = req.body;
 
     // Validate required fields
     if (!userId || !userRole || !title || !description) {
-      return res.status(400).json({ error: 'All fields are required' });
+      return res.status(400).json({ error: 'All fields except link are required' });
     }
 
     // Create a new notification
@@ -16,6 +16,7 @@ const createNotification = async (req, res) => {
       userRole,
       title,
       description,
+      link: link || null, // Set link to null if not provided
     });
 
     // Save the notification to the database
