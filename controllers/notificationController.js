@@ -77,6 +77,32 @@ const markNotificationAsRead = async (req, res) => {
   }
 };
 
+// Mark all notifications for a user as read
+const markAllNotificationsAsRead = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Update all notifications for the user to mark them as read
+    const result = await Notification.updateMany(
+      { userId, isRead: false }, // Only update unread notifications
+      { isRead: true } // Mark as read
+    );
+
+    res.status(200).json({
+      message: 'All notifications marked as read',
+      updatedCount: result.modifiedCount, // Number of notifications updated
+    });
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    res.status(500).json({ error: error.message || 'An error occurred while marking notifications as read' });
+  }
+};
+
 // Delete a notification
 const deleteNotification = async (req, res) => {
   try {
@@ -105,5 +131,6 @@ module.exports = {
   createNotification,
   getNotificationsByUser,
   markNotificationAsRead,
+  markAllNotificationsAsRead,
   deleteNotification,
 };
