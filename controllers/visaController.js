@@ -234,51 +234,52 @@ exports.getRecentExperiences = async (req, res) => {
 // 7. Toggle like on a visa experience
 exports.toggleLike = async (req, res) => {
   try {
-    const { country, postid } = req.body;
-    
+    const { country, postid, userId } = req.body;
     // Validate required fields
-    if (!country || !postid) {
+    if (!country || !postid || !userId) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-    
+
     // Find the visa by country
     const visa = await Visa.findOne({ country });
     if (!visa) {
       return res.status(404).json({ message: 'Visa not found for the specified country' });
     }
-    
+
     // Find the experience by postid
     const experienceIndex = visa.experiences.findIndex(exp => exp.postid === postid);
     if (experienceIndex === -1) {
       return res.status(404).json({ message: 'Experience not found' });
     }
-    
-    // Increment the likes count by 1
-    visa.experiences[experienceIndex].likes = (visa.experiences[experienceIndex].likes || 0) + 1;
-    
-    // Save the updated visa document
-    await visa.save();
-    
-    // Return the complete updated experience
-    const updatedExperience = {
-      postid: visa.experiences[experienceIndex].postid,
-      country: visa.country,
-      flag: visa.flag,
-      title: visa.experiences[experienceIndex].title,
-      excerpt: visa.experiences[experienceIndex].excerpt,
-      author: visa.experiences[experienceIndex].author,
-      date: visa.experiences[experienceIndex].date,
-      likes: visa.experiences[experienceIndex].likes,
-      createdAt: visa.experiences[experienceIndex].createdAt,
-      updatedAt: visa.experiences[experienceIndex].updatedAt
-    };
-    
-    res.status(200).json({ 
-      message: 'Post liked successfully',
-      experience: updatedExperience
-    });
+
+    const experience = visa.experiences[experienceIndex];
+
+    // Check if the user has already liked the post
+    const alreadyLiked = experience.likedBy.includes(userId);
+
+    if (alreadyLiked) {
+      // Unlike the post
+      experience.likedBy = experience.likedBy.filter(id => id !== userId);
+      experience.likes = Math.max(0, experience.likes - 1);
+      await visa.save();
+      return res.status(200).json({
+        message: 'Post unliked successfully',
+        likes: experience.likes,
+        isLiked: false,
+      });
+    } else {
+      // Like the post
+      experience.likedBy.push(userId);
+      experience.likes += 1;
+      await visa.save();
+      return res.status(200).json({
+        message: 'Post liked successfully',
+        likes: experience.likes,
+        isLiked: true,
+      });
+    }
   } catch (error) {
-    console.error('Error liking post:', error);
-    res.status(500).json({ message: 'Error liking post', error: error.message });
+    console.error('Error toggling like:', error);
+    res.status(500).json({ message: 'Error toggling like', error: error.message });
   }
 };

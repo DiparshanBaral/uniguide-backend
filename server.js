@@ -43,6 +43,7 @@ const documentRoutes = require('./routes/documentRoutes');
 const discussionRoutes = require('./routes/discussionRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const visaRoutes = require('./routes/visaRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -58,6 +59,7 @@ app.use('/document', documentRoutes);
 app.use('/discussion', discussionRoutes);
 app.use('/room', roomRoutes);
 app.use('/visa', visaRoutes);
+app.use('/notifications', notificationRoutes);
 
 // Default route
 app.get('/', (req, res) => {

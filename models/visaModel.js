@@ -15,6 +15,7 @@ const experienceSchema = new mongoose.Schema(
     flag: { type: String, required: true }, // Emoji flag of the country
     date: { type: Date, default: Date.now }, // Date of the post
     likes: { type: Number, default: 0 }, // Number of likes
+    likedBy: [{ type: String }], // Array of user IDs who liked this post
   },
   { timestamps: true } // Adds createdAt and updatedAt fields
 );
