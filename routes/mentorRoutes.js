@@ -5,6 +5,8 @@ const {
   getMentorProfile,
   getMentorPublicProfile,
   updateMentor,
+  deleteMentorById,
+  getAllMentors,
 } = require('../controllers/mentorController');
 const { protect } = require('../middleware/authMiddleware');
 const { uploadProfilePic } = require('../config/cloudinaryConfig');
@@ -27,6 +29,9 @@ router.get('/:id', getMentorPublicProfile);
 router.put('/:id', protect, uploadProfilePic.single('profilePic'), updateMentor);
 
 // Delete Mentor by ID
-// router.delete('/:id', deleteMentorById);
+router.delete('/:id', deleteMentorById);
+
+// Route to get all mentors
+router.get('/', protect, getAllMentors);
 
 module.exports = router;

@@ -1,6 +1,15 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Admin } = require("../models/adminModel");
+const { Student } = require('../models/studentModel');
+const { Mentor } = require('../models/mentorModel');
+const { Room } = require('../models/roomModel');
+const {
+  USUniversity,
+  UKUniversity,
+  CanadaUniversity,
+  AustraliaUniversity,
+} = require('../models/universityModel');
 
 const SECRET_KEY = "UniGuideJWT";
 
@@ -30,4 +39,37 @@ const loginAdmin = async (req, res) => {
   }
 };
 
-module.exports = { loginAdmin };
+// Controller to fetch counts
+const getCounts = async (req, res) => {
+  try {
+    // Fetch counts from respective collections
+    const universityCount =
+      (await USUniversity.countDocuments()) +
+      (await UKUniversity.countDocuments()) +
+      (await CanadaUniversity.countDocuments()) +
+      (await AustraliaUniversity.countDocuments());
+
+    const mentorCount = await Mentor.countDocuments();
+    const studentCount = await Student.countDocuments();
+    const discussionRoomCount = await Room.countDocuments();
+
+    // Return the counts
+    res.status(200).json({
+      success: true,
+      data: {
+        universityCount,
+        mentorCount,
+        studentCount,
+        discussionRoomCount,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching counts:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = {
+  loginAdmin,
+  getCounts, // Export the new controller
+};

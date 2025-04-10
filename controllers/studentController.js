@@ -108,6 +108,24 @@ const getStudentById = async (req, res) => {
   }
 };
 
+// Get all students
+const getAllStudents = async (req, res) => {
+  try {
+    // Fetch all students from the database
+    const students = await Student.find().select('-password'); // Exclude the password field
+
+    // Check if there are no students
+    if (!students || students.length === 0) {
+      return res.status(404).json({ message: 'No students found' });
+    }
+
+    res.status(200).json({ success: true, data: students });
+  } catch (error) {
+    console.error('Error fetching all students:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // Update student details
 const updateStudent = async (req, res) => {
   const { firstname, lastname, email, bio, major } = req.body;
@@ -223,8 +241,6 @@ const addToWishlist = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   registerStudent,
   loginStudent,
@@ -233,4 +249,5 @@ module.exports = {
   deleteStudentById,
   getPublicStudentProfile,
   addToWishlist,
+  getAllStudents,
 };

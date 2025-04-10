@@ -80,7 +80,7 @@ const loginMentor = async (req, res) => {
   }
 };
 
-// Fetch mentor by ID (Protected: Only the logged-in mentor can access their own profile)
+// Fetch mentor by ID
 const getMentorProfile = async (req, res) => {
   try {
     if (req.user.id !== req.params.id) {
@@ -94,6 +94,24 @@ const getMentorProfile = async (req, res) => {
     res.json(mentor);
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get all mentors
+const getAllMentors = async (req, res) => {
+  try {
+    // Fetch all mentors from the database
+    const mentors = await Mentor.find().select('-password'); // Exclude the password field
+
+    // Check if there are no mentors
+    if (!mentors || mentors.length === 0) {
+      return res.status(404).json({ message: 'No mentors found' });
+    }
+
+    res.status(200).json({ success: true, data: mentors });
+  } catch (error) {
+    console.error('Error fetching all mentors:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -170,4 +188,4 @@ const deleteMentorById = async (req, res) => {
   }
 };
 
-module.exports = { registerMentor, loginMentor, getMentorProfile, getMentorPublicProfile, updateMentor, deleteMentorById };
+module.exports = { registerMentor, loginMentor, getMentorProfile, getMentorPublicProfile, updateMentor, deleteMentorById, getAllMentors };
