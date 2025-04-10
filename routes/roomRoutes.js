@@ -31,4 +31,10 @@ router.post('/reply/comment', protect, roomController.replyToComment);
 // Get all comments for a post
 router.get('/comments/:roomId/:postId', protect, roomController.getCommentsForPost);
 
+// Increase upvote count
+router.post('/post/upvote', protect, roomController.increaseUpvote);
+
+// Decrease the upvote count
+router.post('/post/downvote', protect, roomController.decreaseUpvote);
+
 module.exports = router;

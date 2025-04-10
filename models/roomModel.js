@@ -39,7 +39,7 @@ const postSchema = new mongoose.Schema(
       avatar: { type: String, required: true },
     },
     upvotes: { type: Number, default: 0 },
-    downvotes: { type: Number, default: 0 },
+    upvotedBy: [{ type: String }],
     comments: [commentSchema], default: []
   },
   { timestamps: true },

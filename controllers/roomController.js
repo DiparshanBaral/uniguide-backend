@@ -282,3 +282,95 @@ exports.getCommentsForPost = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Increase upvote count for a post
+exports.increaseUpvote = async (req, res) => {
+  try {
+    const { roomId, postId, userId } = req.body;
+
+    // Validate required fields
+    if (!roomId || !postId || !userId) {
+      return res.status(400).json({ message: 'Room ID, Post ID, and User ID are required' });
+    }
+
+    // Find the room and the post
+    const room = await Room.findOne({ roomId });
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    const post = room.posts.find((post) => post.postid === postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    // Check if the user has already upvoted
+    const alreadyUpvoted = post.upvotedBy.includes(userId);
+
+    if (alreadyUpvoted) {
+      // Remove the upvote
+      post.upvotedBy = post.upvotedBy.filter((id) => id !== userId);
+      post.upvotes = Math.max(0, post.upvotes - 1);
+    } else {
+      // Add the upvote
+      post.upvotedBy.push(userId);
+      post.upvotes += 1;
+    }
+
+    // Save the updated room
+    await room.save();
+
+    res.status(200).json({
+      message: alreadyUpvoted ? 'Upvote removed successfully' : 'Upvote added successfully',
+      upvotes: post.upvotes,
+    });
+  } catch (error) {
+    console.error('Error toggling upvote:', error.message);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+// Decrease upvote count for a post
+exports.decreaseUpvote = async (req, res) => {
+  try {
+    const { roomId, postId, userId } = req.body;
+
+    // Validate required fields
+    if (!roomId || !postId || !userId) {
+      return res.status(400).json({ message: 'Room ID, Post ID, and User ID are required' });
+    }
+
+    // Find the room and the post
+    const room = await Room.findOne({ roomId });
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    const post = room.posts.find((post) => post.postid === postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    // Check if the user has already upvoted
+    const alreadyUpvoted = post.upvotedBy.includes(userId);
+
+    if (alreadyUpvoted) {
+      // Remove the upvote
+      post.upvotedBy = post.upvotedBy.filter((id) => id !== userId);
+      post.upvotes = Math.max(0, post.upvotes - 1);
+
+      // Save the updated room
+      await room.save();
+
+      return res.status(200).json({
+        message: 'Upvote removed successfully',
+        upvotes: post.upvotes,
+      });
+    } else {
+      return res.status(400).json({ message: 'User has not upvoted this post' });
+    }
+  } catch (error) {
+    console.error('Error decreasing upvote:', error.message);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
