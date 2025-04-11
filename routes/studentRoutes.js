@@ -8,6 +8,7 @@ const {
   addToWishlist,
   deleteStudentById,
   getAllStudents,
+  getWishlistUniversities,
 } = require('../controllers/studentController');
 const { protect } = require('../middleware/authMiddleware');
 const { uploadProfilePic } = require('../config/cloudinaryConfig');
@@ -19,6 +20,9 @@ router.post('/signup', registerStudent);
 
 // Student Login
 router.post('/login', loginStudent);
+
+// Route to get all wishlist universities by name
+router.get('/wishlist', protect, getWishlistUniversities);
 
 // Get Student by ID (protected route)
 router.get('/:id', protect, getStudentById);
@@ -37,6 +41,7 @@ router.get('/public/:id', protect, getPublicStudentProfile);
 
 // Add university to wishlist
 router.post('/wishlist', protect, addToWishlist);
+
 
 
 module.exports = router;

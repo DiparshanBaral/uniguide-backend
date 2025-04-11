@@ -130,8 +130,20 @@ const getMentorPublicProfile = async (req, res) => {
   }
 };
 
+// Update mentor information
 const updateMentor = async (req, res) => {
-  const { firstname, lastname, email, profilePic, bio, expertise, degree, yearsOfExperience } = req.body;
+  const {
+    firstname,
+    lastname,
+    email,
+    profilePic,
+    bio,
+    expertise,
+    degree,
+    yearsOfExperience,
+    paymentInformation,
+    languages,
+  } = req.body;
 
   try {
     const mentor = await Mentor.findById(req.params.id);
@@ -139,6 +151,7 @@ const updateMentor = async (req, res) => {
       return res.status(404).json({ message: 'Mentor not found' });
     }
 
+    // Update mentor details
     mentor.firstname = firstname || mentor.firstname;
     mentor.lastname = lastname || mentor.lastname;
     mentor.email = email || mentor.email;
@@ -148,31 +161,44 @@ const updateMentor = async (req, res) => {
     mentor.degree = degree || mentor.degree;
     mentor.yearsOfExperience = yearsOfExperience || mentor.yearsOfExperience;
 
-    // Check if a file was uploaded
-    if (req.file) {
-      mentor.profilePic = req.file.path; // Save the profile picture URL
+    // Update payment information
+    if (paymentInformation) {
+      mentor.paymentInformation.amount =
+        paymentInformation.amount || mentor.paymentInformation.amount;
+      mentor.paymentInformation.currency =
+        paymentInformation.currency || mentor.paymentInformation.currency;
     }
 
-    const updatedMentor = await mentor.save();
+    // Update languages
+    mentor.languages = languages || mentor.languages;
+
+    // Check if a file was uploaded
+    if (req.file) {
+      mentor.profilePic = req.file.path;
+    }
+
+    const updatedMentor = await mentor.save(); // Trigger pre-save middleware
 
     res.status(200).json({
       message: 'Profile updated successfully',
+      profileCompleted: updatedMentor.profileCompleted, // Include profile completion status
       _id: updatedMentor._id,
       firstname: updatedMentor.firstname,
       lastname: updatedMentor.lastname,
       email: updatedMentor.email,
-      profilePic: updatedMentor.profilePic, 
+      profilePic: updatedMentor.profilePic,
       bio: updatedMentor.bio,
-      expertise: updatedMentor.expertise, 
+      expertise: updatedMentor.expertise,
       degree: updatedMentor.degree,
       yearsOfExperience: updatedMentor.yearsOfExperience,
+      paymentInformation: updatedMentor.paymentInformation,
+      languages: updatedMentor.languages,
     });
   } catch (error) {
     console.error('Error updating mentor:', error.message);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
 
 //delete mentor by id
 const deleteMentorById = async (req, res) => {

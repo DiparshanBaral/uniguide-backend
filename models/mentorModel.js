@@ -23,18 +23,39 @@ const mentorSchema = new mongoose.Schema(
     university: { type: String, default: "NA" }, // Associated university
     degree: { type: String, default: "NA" }, // Degree obtained
     yearsOfExperience: { type: Number, default: 0 }, // Work experience
-    ratings: [{ type: Number, default: [] }], // Array of ratings (1-5 scale)
-    averageRating: { type: Number, default: 0 }, // Calculated rating
-    documentUrl: { type: String, default: "" }, // Mentor verification document URL
     isApproved: { type: Boolean, default: false }, // Track if admin approved the mentor
 
     // Students connected to this mentor
     connectedStudents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student', default: [] }],
+
+    // New Fields
+    profileCompleted: { type: Boolean, default: false }, // Track profile completion
+    paymentInformation: {
+      amount: { type: Number, required: true, default: 0 }, // Amount required to connect with the mentor
+      currency: { type: String, default: 'USD' }, // Currency for the payment
+    },
+    languages: [{ type: String, default: [] }], // List of languages the mentor knows
   },
   { timestamps: true }
 );
 
-const usersDb  = mongoose.connection.useDb('Users');
+mentorSchema.pre('save', function (next) {
+  const requiredStringFields = ['firstname', 'lastname', 'email', 'profilePic', 'bio', 'university', 'degree'];
+  const isStringFieldsComplete = requiredStringFields.every((field) => {
+    // Ensure the field exists and is a string before trimming
+    return this[field] && typeof this[field] === 'string' && this[field].trim() !== '';
+  });
+
+  // Check non-string fields separately
+  const isExpertiseComplete = Array.isArray(this.expertise) && this.expertise.length > 0;
+  const isExperienceComplete = typeof this.yearsOfExperience === 'number' && this.yearsOfExperience > 0;
+
+  // Set profileCompleted based on all checks
+  this.profileCompleted = isStringFieldsComplete && isExpertiseComplete && isExperienceComplete;
+  next();
+});
+
+const usersDb = mongoose.connection.useDb('Users');
 const Mentor = usersDb.model('Mentor', mentorSchema, 'Mentors');
 
 module.exports = { Mentor };

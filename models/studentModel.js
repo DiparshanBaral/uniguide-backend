@@ -27,6 +27,19 @@ const studentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Pre-save middleware to check profile completion
+studentSchema.pre('save', function (next) {
+  const requiredStringFields = ['firstname', 'lastname', 'email', 'profilePic', 'bio', 'major'];
+  const isStringFieldsComplete = requiredStringFields.every((field) => {
+    // Ensure the field exists and is a string before trimming
+    return this[field] && typeof this[field] === 'string' && this[field].trim() !== '';
+  });
+
+  // Check non-string fields separately (if any additional checks are needed)
+  this.profileCompleted = isStringFieldsComplete;
+  next();
+});
+
 const db = mongoose.connection.useDb('Users');
 
 const Student = db.model('Student', studentSchema, 'Students');

@@ -141,17 +141,18 @@ const updateStudent = async (req, res) => {
     student.lastname = lastname || student.lastname;
     student.email = email || student.email;
     student.bio = bio || student.bio;
-    student.major = major || student.major; 
+    student.major = major || student.major;
 
     // Check if a file was uploaded
     if (req.file) {
-      student.profilePic = req.file.path; // Save the profile picture URL
+      student.profilePic = req.file.path;
     }
 
-    const updatedStudent = await student.save();
+    const updatedStudent = await student.save(); // Trigger pre-save middleware
 
     res.status(200).json({
       message: 'Profile updated successfully',
+      profileCompleted: updatedStudent.profileCompleted, // Include profile completion status
       _id: updatedStudent._id,
       firstname: updatedStudent.firstname,
       lastname: updatedStudent.lastname,
@@ -202,7 +203,7 @@ const getPublicStudentProfile = async (req, res) => {
 };
 
 const addToWishlist = async (req, res) => {
-  const studentId = req.user.id; // Since the student is now attached to req.user
+  const studentId = req.user.id;
   const { universityId, country } = req.body;
 
   try {
@@ -241,6 +242,47 @@ const addToWishlist = async (req, res) => {
   }
 };
 
+const getWishlistUniversities = async (req, res) => {
+  try {
+    // Get the student ID from the query parameter or authenticated user
+    const studentId = req.query.studentId || req.user.id;
+
+    // Find the student
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Fetch university details for each ID in targetedUniversities
+    const wishlistUniversities = [];
+    for (const universityId of student.targetedUniversities) {
+      let university = null;
+
+      // Check each country-specific model for the university
+      university =
+        (await USUniversity.findById(universityId)) ||
+        (await UKUniversity.findById(universityId)) ||
+        (await CanadaUniversity.findById(universityId)) ||
+        (await AustraliaUniversity.findById(universityId));
+
+      if (university) {
+        wishlistUniversities.push({
+          name: university.name,
+          country: university.country,
+        });
+      }
+    }
+
+    res.status(200).json({
+      message: 'Wishlist universities fetched successfully',
+      wishlistUniversities,
+    });
+  } catch (error) {
+    console.error('Error fetching wishlist universities:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   registerStudent,
   loginStudent,
@@ -250,4 +292,5 @@ module.exports = {
   getPublicStudentProfile,
   addToWishlist,
   getAllStudents,
+  getWishlistUniversities,
 };

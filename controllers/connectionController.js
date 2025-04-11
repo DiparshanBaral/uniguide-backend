@@ -58,7 +58,7 @@ const applyForConnection = async (req, res) => {
       userRole: 'Mentor',
       title: 'New Connection Request',
       description: 'A student has sent you a connection request.',
-      link: 'mentordashboard',
+      link: '/mentordashboard',
     });
 
     await notification.save();
