@@ -161,7 +161,7 @@ const getAllApprovedAffiliationRequests = async (req, res) => {
       .populate({
         path: 'mentorId',
         model: Mentor, // Directly use the imported Mentor model
-        select: 'firstname lastname email',
+        select: 'firstname lastname email profilePic',
       })
       .lean(); // Convert to a plain object to modify `universityId`
 
