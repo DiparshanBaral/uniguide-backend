@@ -44,6 +44,7 @@ const discussionRoutes = require('./routes/discussionRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const visaRoutes = require('./routes/visaRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -60,6 +61,7 @@ app.use('/discussion', discussionRoutes);
 app.use('/room', roomRoutes);
 app.use('/visa', visaRoutes);
 app.use('/notifications', notificationRoutes);
+app.use('/review', reviewRoutes);
 
 // Default route
 app.get('/', (req, res) => {

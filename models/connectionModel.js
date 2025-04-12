@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const { Mentor } = require('./mentorModel');
+const { Student } = require('./studentModel');
 
 // Use the 'Users' database for connections
 const usersDb = mongoose.connection.useDb('Users');
@@ -8,13 +10,13 @@ const connectionSchema = new mongoose.Schema(
   {
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Student', // Refers to the Student model in the 'Users' database
+      ref: Student, 
       required: true,
       index: true,
     },
     mentorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Mentor', // Refers to the Mentor model in the 'Users' database
+      ref: Mentor,
       required: true,
       index: true,
     },
