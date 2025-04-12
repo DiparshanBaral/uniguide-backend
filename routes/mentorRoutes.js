@@ -7,6 +7,7 @@ const {
   updateMentor,
   deleteMentorById,
   getAllMentors,
+  updateMentorPassword,
 } = require('../controllers/mentorController');
 const { protect } = require('../middleware/authMiddleware');
 const { uploadProfilePic } = require('../config/cloudinaryConfig');
@@ -18,6 +19,9 @@ router.post('/signup', registerMentor);
 
 // Mentor Login
 router.post('/login', loginMentor);
+
+// Update mentor password
+router.put('/password', protect, updateMentorPassword);
 
 // Get Mentor by ID (Protected: Only the mentor themselves can access their profile)
 router.get('/profile/:id', protect, getMentorProfile);

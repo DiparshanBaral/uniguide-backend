@@ -9,6 +9,7 @@ const {
   deleteStudentById,
   getAllStudents,
   getWishlistUniversities,
+  updateStudentPassword,
 } = require('../controllers/studentController');
 const { protect } = require('../middleware/authMiddleware');
 const { uploadProfilePic } = require('../config/cloudinaryConfig');
@@ -24,11 +25,15 @@ router.post('/login', loginStudent);
 // Route to get all wishlist universities by name
 router.get('/wishlist', protect, getWishlistUniversities);
 
+// Update student password
+router.put('/password', protect, updateStudentPassword);
+
 // Get Student by ID (protected route)
 router.get('/:id', protect, getStudentById);
 
 // Update Student by ID (protected route) with profile picture upload
 router.put('/:id', protect, uploadProfilePic.single('profilePic'), updateStudent);
+
 
 // Route to get all students
 router.get('/', protect, getAllStudents);

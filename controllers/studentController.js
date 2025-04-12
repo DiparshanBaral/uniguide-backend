@@ -167,6 +167,38 @@ const updateStudent = async (req, res) => {
   }
 };
 
+// Update student password
+const updateStudentPassword = async (req, res) => {
+  const { studentId, oldPassword, newPassword } = req.body;
+
+  try {
+    // Find the student by ID
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Check if the old password matches
+    const isMatch = await bcrypt.compare(oldPassword, student.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Old password is incorrect' });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the password
+    student.password = hashedPassword;
+    await student.save();
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating password:', error.message);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 //Delete student by id
 const deleteStudentById = async (req, res) => {
   try {
@@ -288,6 +320,7 @@ module.exports = {
   loginStudent,
   getStudentById,
   updateStudent,
+  updateStudentPassword,
   deleteStudentById,
   getPublicStudentProfile,
   addToWishlist,
