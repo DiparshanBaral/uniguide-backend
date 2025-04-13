@@ -16,7 +16,7 @@ const router = express.Router();
 router.post("/apply", protect, protectStudentRoute, applyForConnection);
 
 // Mentor updates connection request (Approve/Reject)
-router.put("/:id/status", protect, protectMentorRoute, updateConnectionStatus);
+router.put("/status", protect, updateConnectionStatus);
 
 // Mentor fetches all pending connection requests
 router.get("/pendingrequests", protect, protectMentorRoute, getPendingConnectionRequests);

@@ -73,8 +73,7 @@ const applyForConnection = async (req, res) => {
 // Mentor Approves or Rejects Connection Request
 const updateConnectionStatus = async (req, res) => {
   try {
-    const { status } = req.body; // Get the status (Approved or Rejected)
-    const { id } = req.params; // Get the Connection ID
+    const { status, id } = req.body; // Get the status (Approved or Rejected)
 
     // Validate the status field
     if (!status) {
@@ -114,19 +113,21 @@ const updateConnectionStatus = async (req, res) => {
       }
 
       const universityName = mentor.university;
-
+      
       // Determine the mentor's country using the university name
       let country = null;
       for (const [key, UniversityModel] of Object.entries(universityModels)) {
         const university = await UniversityModel.findOne({ name: universityName });
+        console.log(`Checking in ${key} universities:`, university);
         if (university) {
-          country = university.location; // Use the 'location' field as the country
+          country = university.country; // Use the 'country' field instead of 'location'
           break;
         }
       }
 
       if (!country || !['US', 'UK', 'Canada', 'Australia'].includes(country)) {
-        return res.status(400).json({ error: 'Mentor does not have a valid university location' });
+        console.error('Invalid university country:', country);
+        return res.status(400).json({ error: 'Mentor does not have a valid university country' });
       }
 
       // Fetch default tasks for the specified country
@@ -206,7 +207,7 @@ const getPendingConnectionRequests = async (req, res) => {
       .populate({
         path: 'studentId',
         model: Student, // Directly use the imported Student model
-        select: 'firstname lastname email profilePic',
+        select: 'firstname lastname email profilePic major',
       })
       .lean();
 

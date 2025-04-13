@@ -4,7 +4,7 @@ const { Visa } = require('../models/visaModel');
 // 1. Get all visa experiences
 exports.getAllVisaExperiences = async (req, res) => {
   try {
-    const visas = await Visa.find({}, 'country flag experiences');
+    const visas = await Visa.find({}, 'country flag experiences author');
     const allExperiences = visas.flatMap((visa) =>
       visa.experiences.map((exp) => ({
         postid: exp.postid,
@@ -161,7 +161,7 @@ exports.getAuthorPosts = async (req, res) => {
   try {
     const { authorId } = req.params;
 
-    const visas = await Visa.find({}, 'country flag experiences');
+    const visas = await Visa.find({}, 'country flag experiences author');
     const authorPosts = visas.flatMap((visa) =>
       visa.experiences
         .filter((exp) => exp.author.authorId === authorId)
@@ -196,7 +196,7 @@ exports.getRecentExperiences = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     
     // Find all visas and their experiences
-    const visas = await Visa.find({}, 'country flag experiences');
+    const visas = await Visa.find({}, 'country flag experiences author');
     
     // Extract all experiences from all visas into a flat array
     let allExperiences = visas.flatMap((visa) =>

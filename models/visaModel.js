@@ -3,21 +3,21 @@ const mongoose = require('mongoose');
 // Visa Experience Schema
 const experienceSchema = new mongoose.Schema(
   {
-    postid: { type: String, required: true }, // Unique ID for each experience post
-    title: { type: String, required: true }, // Title of the experience
-    excerpt: { type: String, required: true }, // Short description of the experience
+    postid: { type: String, required: true }, 
+    title: { type: String, required: true },
+    excerpt: { type: String, required: true },
     author: {
-      authorId: { type: String, required: true }, // Author's unique ID
-      name: { type: String, required: true }, // Author's name
-      avatar: { type: String, required: true }, // Author's avatar URL
+      authorId: { type: String, required: true },
+      name: { type: String, required: true },
+      avatar: { type: String, required: true },
     },
-    country: { type: String, required: true }, // Country related to the experience
-    flag: { type: String, required: true }, // Emoji flag of the country
-    date: { type: Date, default: Date.now }, // Date of the post
-    likes: { type: Number, default: 0 }, // Number of likes
-    likedBy: [{ type: String }], // Array of user IDs who liked this post
+    country: { type: String, required: true },
+    flag: { type: String, required: true },
+    date: { type: Date, default: Date.now },
+    likes: { type: Number, default: 0 },
+    likedBy: [{ type: String }],
   },
-  { timestamps: true } // Adds createdAt and updatedAt fields
+  { timestamps: true }
 );
 
 // Visa Schema
