@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const Mentor = require('../models/mentorModel').Mentor;
+const { Mentor } = require('../models/mentorModel');
+const { Payment } = require('../models/paymentModel');
 
 // Use the 'Users' database for mentors
 const usersDb = mongoose.connection.useDb('Users');
@@ -11,7 +12,7 @@ const affiliationSchema = new mongoose.Schema(
   {
     mentorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Mentor', // Refers to the Mentor model in the 'Users' database
+      ref: Mentor,
       required: true,
       index: true,
     },
@@ -46,6 +47,11 @@ const affiliationSchema = new mongoose.Schema(
       type: String,
       enum: ["US", "UK", "Canada", "Australia"], // The location of the university (to determine the collection)
       required: true,
+    },
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: Payment,
+      default: null,
     },
   },
   { timestamps: true }

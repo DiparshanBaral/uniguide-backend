@@ -1,6 +1,8 @@
 const Affiliation = require('../models/affiliationModel');
+const { Payment } = require('../models/paymentModel');
 const { upload } = require('../config/cloudinaryConfig');
 const Mentor = require('../models/mentorModel').Mentor;
+const { Notification } = require('../models/notificationModel');
 const {
   USUniversity,
   UKUniversity,
@@ -15,10 +17,10 @@ const universityModels = {
   Australia: AustraliaUniversity,
 };
 
-// Mentor submits an affiliation request with document upload
+// Mentor submits an affiliation request with document upload and payment details
 const applyForAffiliation = async (req, res) => {
   try {
-    const { mentorId, universityId, universityLocation, description } = req.body;
+    const { mentorId, universityId, universityLocation, description, expectedConsultationFee, currency } = req.body;
 
     // Ensure the file was uploaded successfully
     if (!req.file?.path) {
@@ -26,7 +28,7 @@ const applyForAffiliation = async (req, res) => {
     }
 
     // Validate required fields
-    if (!mentorId || !universityId || !universityLocation || !description) {
+    if (!mentorId || !universityId || !universityLocation || !description || !expectedConsultationFee || !currency) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
@@ -52,8 +54,45 @@ const applyForAffiliation = async (req, res) => {
       status: 'Pending',
     });
 
-    await affiliation.save();
-    res.status(201).json({ message: 'Affiliation request submitted successfully', affiliation });
+    const savedAffiliation = await affiliation.save();
+
+    // Create payment record
+    const payment = new Payment({
+      affiliationId: savedAffiliation._id,
+      mentorId,
+      expectedConsultationFee,
+      currency,
+      negotiationHistory: [
+        {
+          proposedBy: 'mentor',
+          amount: expectedConsultationFee,
+          message: 'Initial fee proposal',
+        },
+      ],
+    });
+
+    const savedPayment = await payment.save();
+
+    // Update affiliation with payment ID
+    savedAffiliation.paymentId = savedPayment._id;
+    await savedAffiliation.save();
+
+    // Create notification for admin
+    const notification = new Notification({
+      userId: process.env.ADMIN_ID, // This should be configured in your .env file
+      userRole: 'Admin',
+      title: 'New Affiliation Request',
+      description: `A mentor has submitted an affiliation request with ${expectedConsultationFee} ${currency} expected fee.`,
+      link: '/admin/affiliations',
+    });
+
+    await notification.save();
+
+    res.status(201).json({ 
+      message: 'Affiliation request submitted successfully', 
+      affiliation: savedAffiliation,
+      payment: savedPayment
+    });
   } catch (error) {
     console.error('Error in applyForAffiliation: ', JSON.stringify(error, null, 2));
 
@@ -67,14 +106,14 @@ const applyForAffiliation = async (req, res) => {
   }
 };
 
-// Admin Approves or Rejects Request
+// Admin Approves or Rejects Request with negotiated fee
 const updateAffiliationStatus = async (req, res) => {
   try {
-    const { status } = req.body; // Get the status (Approved or Rejected)
+    const { status, negotiatedConsultationFee, message } = req.body; // Get status and fee info
     const { id } = req.params; // Get the Affiliation ID
 
     // Validate the provided status
-    if (!['Approved', 'Rejected'].includes(status)) {
+    if (!['Approved', 'Rejected', 'Pending_Mentor_Approval'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
@@ -84,9 +123,49 @@ const updateAffiliationStatus = async (req, res) => {
       return res.status(404).json({ error: 'Affiliation request not found' });
     }
 
-    // If the request is approved, update the mentor's university and isApproved field
+    // If status is Pending_Mentor_Approval, we need negotiated fee
+    if (status === 'Pending_Mentor_Approval' && !negotiatedConsultationFee) {
+      return res.status(400).json({ error: 'Negotiated fee is required for approval' });
+    }
+
+    // Update the payment record if exists
+    if (affiliation.paymentId) {
+      const payment = await Payment.findById(affiliation.paymentId);
+      
+      if (payment) {
+        if (status === 'Pending_Mentor_Approval') {
+          payment.negotiatedConsultationFee = negotiatedConsultationFee;
+          payment.status = 'admin_approved';
+          
+          // Add to negotiation history
+          payment.negotiationHistory.push({
+            proposedBy: 'admin',
+            amount: negotiatedConsultationFee,
+            message: message || 'Admin fee negotiation',
+          });
+          
+          await payment.save();
+          
+          // Create notification for mentor
+          const notification = new Notification({
+            userId: affiliation.mentorId,
+            userRole: 'Mentor',
+            title: 'Affiliation Fee Negotiated',
+            description: `Admin has negotiated your consultation fee to ${negotiatedConsultationFee} ${payment.currency}. Please review and approve.`,
+            link: '/payment/review',
+          });
+          
+          await notification.save();
+        } else if (status === 'Rejected') {
+          payment.status = 'rejected';
+          await payment.save();
+        }
+      }
+    }
+
+    // If the request is directly approved (rare case without negotiation)
     if (status === 'Approved') {
-      const mentorId = affiliation.mentorId; // Get the mentor ID from the affiliation
+      const mentorId = affiliation.mentorId; // Get the mentor ID
       const universityId = affiliation.universityId; // Get the university ID
 
       // Find the university to get its name
@@ -109,7 +188,29 @@ const updateAffiliationStatus = async (req, res) => {
 
       // Update the university's affiliatedMentors array
       university.affiliatedMentors.push(mentorId);
-      await university.save(); // Save the updated university document
+      await university.save();
+      
+      // Create notification for mentor
+      const notification = new Notification({
+        userId: mentorId,
+        userRole: 'Mentor',
+        title: 'Affiliation Approved',
+        description: `Your affiliation with ${university.name} has been approved.`,
+        link: '/mentordashboard',
+      });
+      
+      await notification.save();
+    } else if (status === 'Rejected') {
+      // Create notification for mentor
+      const notification = new Notification({
+        userId: affiliation.mentorId,
+        userRole: 'Mentor',
+        title: 'Affiliation Rejected',
+        description: 'Your affiliation request has been rejected by the admin.',
+        link: '/mentordashboard',
+      });
+      
+      await notification.save();
     }
 
     // Update the status of the affiliation request
