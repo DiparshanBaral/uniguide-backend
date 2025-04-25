@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const { Mentor } = require('../models/mentorModel');
-const { Payment } = require('../models/paymentModel');
+const { PaymentNegotiation } = require('../models/paymentNegotiationModel');
 
 // Use the 'Users' database for mentors
 const usersDb = mongoose.connection.useDb('Users');
@@ -48,9 +48,9 @@ const affiliationSchema = new mongoose.Schema(
       enum: ["US", "UK", "Canada", "Australia"], // The location of the university (to determine the collection)
       required: true,
     },
-    paymentId: {
+    paymentNegotiationId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: Payment,
+      ref: PaymentNegotiation,
       default: null,
     },
   },

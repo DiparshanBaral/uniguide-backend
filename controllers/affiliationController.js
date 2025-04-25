@@ -1,5 +1,5 @@
 const Affiliation = require('../models/affiliationModel');
-const { Payment } = require('../models/paymentModel');
+const { PaymentNegotiation } = require('../models/paymentNegotiationModel');
 const { upload } = require('../config/cloudinaryConfig');
 const Mentor = require('../models/mentorModel').Mentor;
 const { Notification } = require('../models/notificationModel');
@@ -56,8 +56,8 @@ const applyForAffiliation = async (req, res) => {
 
     const savedAffiliation = await affiliation.save();
 
-    // Create payment record
-    const payment = new Payment({
+    // Create payment negotiation record
+    const paymentNegotiation = new PaymentNegotiation({
       affiliationId: savedAffiliation._id,
       mentorId,
       expectedConsultationFee,
@@ -71,27 +71,16 @@ const applyForAffiliation = async (req, res) => {
       ],
     });
 
-    const savedPayment = await payment.save();
+    const savedPaymentNegotiation = await paymentNegotiation.save();
 
-    // Update affiliation with payment ID
-    savedAffiliation.paymentId = savedPayment._id;
+    // Update affiliation with payment negotiation ID
+    savedAffiliation.paymentNegotiationId = savedPaymentNegotiation._id;
     await savedAffiliation.save();
-
-    // Create notification for admin
-    const notification = new Notification({
-      userId: process.env.ADMIN_ID, // This should be configured in your .env file
-      userRole: 'Admin',
-      title: 'New Affiliation Request',
-      description: `A mentor has submitted an affiliation request with ${expectedConsultationFee} ${currency} expected fee.`,
-      link: '/admin/affiliations',
-    });
-
-    await notification.save();
 
     res.status(201).json({ 
       message: 'Affiliation request submitted successfully', 
       affiliation: savedAffiliation,
-      payment: savedPayment
+      paymentNegotiation: savedPaymentNegotiation
     });
   } catch (error) {
     console.error('Error in applyForAffiliation: ', JSON.stringify(error, null, 2));
@@ -128,37 +117,38 @@ const updateAffiliationStatus = async (req, res) => {
       return res.status(400).json({ error: 'Negotiated fee is required for approval' });
     }
 
-    // Update the payment record if exists
-    if (affiliation.paymentId) {
-      const payment = await Payment.findById(affiliation.paymentId);
+    // Update the payment negotiation record if exists
+    if (affiliation.paymentNegotiationId) {
+      const paymentNegotiation = await PaymentNegotiation.findById(affiliation.paymentNegotiationId);
       
-      if (payment) {
+      if (paymentNegotiation) {
         if (status === 'Pending_Mentor_Approval') {
-          payment.negotiatedConsultationFee = negotiatedConsultationFee;
-          payment.status = 'admin_approved';
+          paymentNegotiation.negotiatedConsultationFee = negotiatedConsultationFee;
+          paymentNegotiation.status = 'admin_approved';
           
           // Add to negotiation history
-          payment.negotiationHistory.push({
+          paymentNegotiation.negotiationHistory.push({
             proposedBy: 'admin',
             amount: negotiatedConsultationFee,
             message: message || 'Admin fee negotiation',
+            timestamp: new Date()
           });
           
-          await payment.save();
+          await paymentNegotiation.save();
           
           // Create notification for mentor
           const notification = new Notification({
             userId: affiliation.mentorId,
             userRole: 'Mentor',
             title: 'Affiliation Fee Negotiated',
-            description: `Admin has negotiated your consultation fee to ${negotiatedConsultationFee} ${payment.currency}. Please review and approve.`,
-            link: '/payment/review',
+            description: `Admin has negotiated your consultation fee to ${negotiatedConsultationFee} ${paymentNegotiation.currency}. Please review and approve.`,
+            link: '/payments',
           });
           
           await notification.save();
         } else if (status === 'Rejected') {
-          payment.status = 'rejected';
-          await payment.save();
+          paymentNegotiation.status = 'rejected';
+          await paymentNegotiation.save();
         }
       }
     }
@@ -236,6 +226,7 @@ const getAllAffiliationRequests = async (req, res) => {
         model: Mentor, // Directly use the imported Mentor model
         select: 'firstname lastname email profilePic',
       })
+      .populate('paymentNegotiationId')
       .lean(); // Convert to a plain object to modify `universityId`
 
     // Manually populate the universityId field based on universityLocation
