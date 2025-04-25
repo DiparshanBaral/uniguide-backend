@@ -9,16 +9,11 @@ const mentorSchema = new mongoose.Schema(
     role: { type: String, enum: ['mentor'], default: 'mentor' },
     profilePic: {
       type: String,
-      validate: {
-        validator: function (v) {
-          return /^https?:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|raw)\/upload\/v\d+\/ProfilePictures\/[a-zA-Z0-9_-]+\.(jpg|jpeg|webp|png)$/.test(v);
-        },
-        message: "Invalid URL format for profilePic",
-      },
+      default: '', // Default to an empty string or set dynamically during Google login
     },
 
     // Mentor-Specific Fields
-    bio: { type: String, maxlength: 500, default: "" }, // Short introduction
+    bio: { type: String, maxlength: 500, default: '' }, // Short introduction
     expertise: [{ type: String, default: [] }], // List of expertise areas
     university: { type: String, default: "NA" }, // Associated university
     degree: { type: String, default: "NA" }, // Degree obtained
@@ -35,6 +30,9 @@ const mentorSchema = new mongoose.Schema(
     // New Fields
     profileCompleted: { type: Boolean, default: false }, // Track profile completion
     languages: [{ type: String, default: [] }], // List of languages the mentor knows
+
+    // Add this to the schema:
+    googleId: { type: String },
   },
   { timestamps: true }
 );

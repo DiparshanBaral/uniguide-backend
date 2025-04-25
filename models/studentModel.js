@@ -9,20 +9,16 @@ const studentSchema = new mongoose.Schema(
     role: { type: String, enum: ['student'], default: 'student' },
     profilePic: {
       type: String,
-      validate: {
-        validator: function (v) {
-          return /^https?:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|raw)\/upload\/v\d+\/ProfilePictures\/[a-zA-Z0-9_-]+\.(jpg|jpeg|webp|png)$/.test(v);
-        },
-        message: "Invalid URL format for profilePic",
-      },
+      default: '', // Default to an empty string or set dynamically during Google login
     },
-    bio: { type: String, default: '' }, // Short biography
-    major: { type: String, default: '' }, // Field of study
+    bio: { type: String, default: '' },
+    major: { type: String, default: '' },
     targetedUniversities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'University' }], // Interested universities
     connectedMentors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Mentors' }], // List of mentor IDs
     discussionRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'DiscussionRoom' }], // Connected discussion rooms
     visaContributions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'VisaPost' }], // Visa-related posts
     profileCompleted: { type: Boolean, default: false }, // Track profile completion
+    googleId: { type: String },
   },
   { timestamps: true }
 );

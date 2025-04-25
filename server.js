@@ -5,6 +5,9 @@ const http = require('http'); // Required for integrating Socket.IO
 const mongoose = require('mongoose');
 const { Server } = require('socket.io'); // Use Socket.IO
 const connectDB = require('./config/db');
+const session = require('express-session');
+const passport = require('./config/googleAuthConfig');
+const googleAuthRoutes = require('./routes/googleAuthRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -28,6 +31,18 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Automatically handle preflight requests for all routes
+
+// Add session middleware before your routes
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'uniguide_session_secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Import routes
 const studentRoutes = require('./routes/studentRoutes');
@@ -64,6 +79,7 @@ app.use('/visa', visaRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/review', reviewRoutes);
 app.use('/paymentnegotiation', paymentNegotiationRoutes);
+app.use('/auth/google', googleAuthRoutes);
 
 // Default route
 app.get('/', (req, res) => {
@@ -192,5 +208,5 @@ io.on('connection', async (socket) => {
 // Start Server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
