@@ -25,15 +25,15 @@ const mentorSchema = new mongoose.Schema(
     yearsOfExperience: { type: Number, default: 0 }, // Work experience
     isApproved: { type: Boolean, default: false }, // Track if admin approved the mentor
 
+    // Adding consultation fee fields instead of paymentInformation object
+    consultationFee: { type: Number, default: 0 }, // Amount required to connect with the mentor
+    currency: { type: String, default: 'USD' }, // Currency for the consultation fee
+    
     // Students connected to this mentor
     connectedStudents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student', default: [] }],
 
     // New Fields
     profileCompleted: { type: Boolean, default: false }, // Track profile completion
-    paymentInformation: {
-      amount: { type: Number, required: true, default: 0 }, // Amount required to connect with the mentor
-      currency: { type: String, default: 'USD' }, // Currency for the payment
-    },
     languages: [{ type: String, default: [] }], // List of languages the mentor knows
   },
   { timestamps: true }

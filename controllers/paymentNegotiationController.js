@@ -167,9 +167,38 @@ const respondToNegotiation = async (req, res) => {
         timestamp: new Date()
       });
       
+      // Update the mentor document with the final consultation fee
+      await Mentor.findByIdAndUpdate(
+        negotiation.mentorId,
+        {
+          consultationFee: negotiation.finalConsultationFee,
+          currency: negotiation.currency
+        },
+        { new: true }
+      );
+      
+      // Also update the affiliation status to Approved if it's not already
+      const affiliation = await Affiliation.findById(negotiation.affiliationId);
+      if (affiliation && affiliation.status !== 'Approved') {
+        affiliation.status = 'Approved';
+        await affiliation.save();
+      }
+      
+      
     } else if (response === 'reject') {
       // Mentor rejects the negotiation
       negotiation.status = 'rejected';
+      
+      // Create notification for admin
+      const notification = new Notification({
+        userId: process.env.ADMIN_ID,
+        userRole: 'Admin',
+        title: 'Fee Negotiation Rejected',
+        description: 'Mentor has rejected the proposed consultation fee.',
+        link: '/admin/affiliations',
+      });
+      
+      await notification.save();
       
     } else if (response === 'counter') {
       // Mentor makes a counter offer

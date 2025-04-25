@@ -27,7 +27,7 @@ const universitySchema = new mongoose.Schema({
     type: String,
     validate: {
       validator: function (v) {
-        return /^https?:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|raw)\/upload\/v\d+\/universities\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png)$/.test(v);
+        return /^https?:\/\/res\.cloudinary\.com\/[a-zA-Z0-9_-]+\/(image|raw)\/upload\/v\d+\/universities\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/.test(v);
       },
       message: "Invalid URL format for university image",
     },
