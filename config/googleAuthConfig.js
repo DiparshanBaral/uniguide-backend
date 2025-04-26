@@ -14,29 +14,46 @@ passport.use(
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
-        const { id, emails, photos, name } = profile;
+        const { emails, photos, name } = profile;
+        
+        // Check if email is available
+        if (!emails || emails.length === 0) {
+          return done(null, false, { message: "Email information is required but was not provided by Google." });
+        }
+        
         const email = emails[0].value;
-        const profilePic = photos[0].value; // Use Google profile picture
-        const firstname = name.givenName; // Extract first name
-        const lastname = name.familyName; // Extract last name
+        const profilePic = photos?.[0]?.value || "";
+        const firstname = name?.givenName || email.split('@')[0];
+        const lastname = name?.familyName || "";
+        const role = req.query.role; // Get role from query parameter
+        const action = req.query.action; // Get action (login or signup)
+
+        if (!role || (role !== "student" && role !== "mentor")) {
+          return done(null, false, { message: "Invalid or missing role parameter." });
+        }
 
         let user;
-        if (req.session.role === 'student') {
+        if (role === "student") {
           user = await Student.findOneAndUpdate(
             { email },
-            { firstname, lastname, profilePic }, // Update firstname, lastname, and profilePic
-            { new: true, upsert: true }
+            { firstname, lastname, profilePic },
+            { new: true, upsert: action === "signup" }
           );
-        } else if (req.session.role === 'mentor') {
+        } else if (role === "mentor") {
           user = await Mentor.findOneAndUpdate(
             { email },
-            { firstname, lastname, profilePic }, // Update firstname, lastname, and profilePic
-            { new: true, upsert: true }
+            { firstname, lastname, profilePic },
+            { new: true, upsert: action === "signup" }
           );
         }
 
-        done(null, { user, role: req.session.role });
+        if (!user) {
+          return done(null, false, { message: "User not found or invalid role." });
+        }
+
+        done(null, { user, role });
       } catch (error) {
+        console.error("Google auth error:", error);
         done(error);
       }
     }
