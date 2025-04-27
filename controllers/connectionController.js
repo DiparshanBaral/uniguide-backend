@@ -337,6 +337,46 @@ const deleteConnection = async (req, res) => {
       .json({ error: error.message || 'An error occurred while deleting the connection' });
   }
 };
+const getConnectionById = async (req, res) => {
+  try {
+    const { connectionId } = req.query;
+
+    // Validate connectionId
+    if (!connectionId) {
+      return res.status(400).json({ error: "Connection ID is required" });
+    }
+
+    // Find the connection by ID and populate related fields
+    const connection = await Connection.findById(connectionId)
+      .populate({
+        path: "studentId",
+        model: Student,
+        select: "firstname lastname email profilePic major bio",
+      })
+      .populate({
+        path: "mentorId",
+        model: Mentor,
+        select: "firstname lastname email profilePic university expertise degree yearsOfExperience consultationFee currency",
+      })
+      .populate({
+        path: "portalId",
+        model: Portal,
+        select: "country applicationStatus tasks documents",
+      })
+      .lean();
+
+    // Check if the connection exists
+    if (!connection) {
+      return res.status(404).json({ error: "Connection not found" });
+    }
+
+    // Return the connection details
+    res.status(200).json(connection);
+  } catch (error) {
+    console.error("Error fetching connection by ID:", error);
+    res.status(500).json({ error: error.message || "An error occurred while fetching the connection" });
+  }
+};
 
 module.exports = {
   applyForConnection,
@@ -346,4 +386,5 @@ module.exports = {
   getStudentPendingConnections,
   getStudentApprovedConnections,
   deleteConnection,
+  getConnectionById,
 };

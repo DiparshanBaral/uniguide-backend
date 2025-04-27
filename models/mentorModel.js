@@ -19,10 +19,6 @@ const mentorSchema = new mongoose.Schema(
     degree: { type: String, default: "NA" }, // Degree obtained
     yearsOfExperience: { type: Number, default: 0 }, // Work experience
     isApproved: { type: Boolean, default: false }, // Track if admin approved the mentor
-
-    // Adding consultation fee fields instead of paymentInformation object
-    consultationFee: { type: Number, default: 0 }, // Amount required to connect with the mentor
-    currency: { type: String, default: 'USD' }, // Currency for the consultation fee
     
     // Students connected to this mentor
     connectedStudents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student', default: [] }],

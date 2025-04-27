@@ -62,6 +62,23 @@ const paymentNegotiationSchema = new mongoose.Schema({
   ]
 }, { timestamps: true });
 
+paymentNegotiationSchema.pre('save', function(next) {
+  // Normalize the currency code
+  if (this.currency) {
+    const currencyMap = {
+      'nrs': 'npr',
+      'rs': 'inr',
+      'rupee': 'inr',
+      'rupees': 'inr'
+    };
+    
+    const normalized = (this.currency || '').toLowerCase();
+    this.currency = currencyMap[normalized] || normalized;
+  }
+  
+  next();
+});
+
 const PaymentNegotiation = usersDb.model('PaymentNegotiation', paymentNegotiationSchema);
 
 module.exports = { PaymentNegotiation };

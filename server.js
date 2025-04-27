@@ -61,6 +61,7 @@ const visaRoutes = require('./routes/visaRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const paymentNegotiationRoutes = require('./routes/paymentNegotiationRoutes');
+const paymentRoutes = require('./payment/payment.route'); 
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -80,6 +81,7 @@ app.use('/notifications', notificationRoutes);
 app.use('/review', reviewRoutes);
 app.use('/paymentnegotiation', paymentNegotiationRoutes);
 app.use('/auth/google', googleAuthRoutes);
+app.use('/payment', paymentRoutes); // Use the payment routes
 
 // Default route
 app.get('/', (req, res) => {

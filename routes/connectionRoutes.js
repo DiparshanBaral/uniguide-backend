@@ -7,6 +7,7 @@ const {
   getStudentPendingConnections,
   getStudentApprovedConnections,
   deleteConnection,
+  getConnectionById,
 } = require("../controllers/connectionController");
 const { protect, protectMentorRoute, protectStudentRoute } = require("../middleware/authMiddleware");
 
@@ -22,13 +23,16 @@ router.put("/status", protect, updateConnectionStatus);
 router.get("/pendingrequests", protect, protectMentorRoute, getPendingConnectionRequests);
 
 // Mentor fetches all approved connections
-router.get("/approvedconnections", protect, protectMentorRoute, getApprovedConnections);
+router.get("/approvedconnections", protect, getApprovedConnections);
 
 // Student fetches all pending connections
 router.get("/student/pendingconnections", protect, protectStudentRoute, getStudentPendingConnections);
 
 // Student fetches all approved connections
 router.get("/student/approvedconnections", protect, protectStudentRoute, getStudentApprovedConnections);
+
+//get specific connection by id
+router.get("/specificConnection", protect, getConnectionById);
 
 // Delete a connection by ID
 router.delete('/:id', protect, deleteConnection);

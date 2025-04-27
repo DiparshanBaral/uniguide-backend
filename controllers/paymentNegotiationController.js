@@ -167,16 +167,6 @@ const respondToNegotiation = async (req, res) => {
         timestamp: new Date()
       });
       
-      // Update the mentor document with the final consultation fee
-      await Mentor.findByIdAndUpdate(
-        negotiation.mentorId,
-        {
-          consultationFee: negotiation.finalConsultationFee,
-          currency: negotiation.currency
-        },
-        { new: true }
-      );
-      
       // Also update the affiliation status to Approved if it's not already
       const affiliation = await Affiliation.findById(negotiation.affiliationId);
       if (affiliation && affiliation.status !== 'Approved') {
