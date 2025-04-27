@@ -7,7 +7,6 @@ const { Server } = require('socket.io'); // Use Socket.IO
 const connectDB = require('./config/db');
 const session = require('express-session');
 const passport = require('./config/googleAuthConfig');
-const googleAuthRoutes = require('./routes/googleAuthRoutes');
 
 // Connect to MongoDB
 connectDB();
@@ -33,12 +32,14 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Automatically handle preflight requests for all routes
 
 // Add session middleware before your routes
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'uniguide_session_secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: process.env.NODE_ENV === 'production' }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'uniguide_session_secret_key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === 'production' }
+  })
+);
 
 // Initialize passport
 app.use(passport.initialize());
@@ -62,6 +63,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const paymentNegotiationRoutes = require('./routes/paymentNegotiationRoutes');
 const paymentRoutes = require('./payment/payment.route'); 
+const googleAuthRoutes = require('./routes/googleAuthRoutes');
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -80,8 +82,20 @@ app.use('/visa', visaRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/review', reviewRoutes);
 app.use('/paymentnegotiation', paymentNegotiationRoutes);
-app.use('/auth/google', googleAuthRoutes);
+app.use('/auth', googleAuthRoutes);
 app.use('/payment', paymentRoutes); // Use the payment routes
+
+// Add this after your routes are mounted
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+// Add a catch-all route to handle undefined routes
+app.use((req, res) => {
+  console.error(`Route not found: ${req.method} ${req.url}`);
+  res.status(404).send('Not Found');
+});
 
 // Default route
 app.get('/', (req, res) => {
