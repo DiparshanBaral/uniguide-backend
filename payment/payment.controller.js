@@ -5,21 +5,15 @@ const { Mentor } = require('../models/mentorModel');
 const { PaymentNegotiation } = require('../models/paymentNegotiationModel');
 const { v4: uuidv4 } = require('uuid');
 
-// Add this function at the top of your file, above the controllers
+// Normalize currency code mapping
 const normalizeCurrencyCode = (code) => {
-  // Currency code mapping for special cases
   const currencyMap = {
-    'nrs': 'npr',  // Map Nepalese Rupee from 'nrs' to 'npr'
-    'rs': 'inr',   // Map Indian Rupee from 'rs' to 'inr'
+    'nrs': 'npr', // Map Nepalese Rupee from 'nrs' to 'npr'
+    'rs': 'inr',  // Map Indian Rupee from 'rs' to 'inr'
     'rupee': 'inr',
     'rupees': 'inr',
-    // Add more mappings as needed
   };
-  
-  // Convert to lowercase for consistency
   const lowercaseCode = (code || '').toLowerCase();
-  
-  // Return the mapped code or the original if no mapping exists
   return currencyMap[lowercaseCode] || lowercaseCode;
 };
 
@@ -28,7 +22,7 @@ const createPaymentIntent = async (req, res) => {
   try {
     const { connectionId, fee, currency } = req.body;
     console.log('Creating payment intent for connection:', connectionId);
-    
+
     // Fetch the connection details
     const connection = await Connection.findById(connectionId)
       .populate('studentId')
@@ -38,10 +32,15 @@ const createPaymentIntent = async (req, res) => {
       return res.status(404).json({ error: 'Connection not found' });
     }
 
+    // Validate mentorId and studentId
+    if (!connection.mentorId || !connection.studentId) {
+      return res.status(400).json({ error: 'Invalid connection details' });
+    }
+
     // Check if payment already exists
     const existingPayment = await Payment.findOne({
       connectionId,
-      paymentStatus: 'paid'
+      paymentStatus: 'paid',
     });
 
     if (existingPayment) {
@@ -50,7 +49,7 @@ const createPaymentIntent = async (req, res) => {
 
     // Get the fee details
     let amount, currencyCode;
-    
+
     if (fee && currency) {
       // If fee details are provided in the request, use them
       amount = fee;
@@ -58,16 +57,13 @@ const createPaymentIntent = async (req, res) => {
     } else {
       // Use the populated mentor data as fallback
       const mentor = connection.mentorId;
-      if (!mentor) {
-        return res.status(404).json({ error: 'Mentor not found' });
-      }
-      
+
       // Try to find negotiated fee
       const negotiation = await PaymentNegotiation.findOne({
         mentorId: mentor._id,
-        status: 'mentor_approved'
+        status: 'mentor_approved',
       });
-      
+
       if (negotiation && negotiation.finalConsultationFee) {
         amount = negotiation.finalConsultationFee;
         currencyCode = normalizeCurrencyCode(negotiation.currency);
@@ -193,8 +189,7 @@ const getConnectionPaymentStatus = async (req, res) => {
     const { connectionId } = req.params;
 
     // Find the most recent payment for this connection
-    const payment = await Payment.findOne({ connectionId })
-      .sort({ createdAt: -1 });
+    const payment = await Payment.findOne({ connectionId }).sort({ createdAt: -1 });
 
     if (!payment) {
       return res.status(200).json({ status: 'pending', payment: null });
@@ -207,23 +202,40 @@ const getConnectionPaymentStatus = async (req, res) => {
   }
 };
 
-// Add this new function to your existing controller
-
+// Get Transactions By User
 const getTransactionsByUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     // Find all payments where the user is either the student or the mentor
     const transactions = await Payment.find({
       $or: [
         { studentId: userId },
-        { mentorId: userId }
-      ]
+        { mentorId: userId },
+      ],
     })
-    .populate('studentId', 'firstname lastname email')
-    .populate('mentorId', 'firstname lastname email')
-    .sort({ createdAt: -1 });
-    
+      .populate({
+        path: 'studentId',
+        select: 'firstname lastname email',
+        options: { lean: true },
+      })
+      .populate({
+        path: 'mentorId',
+        select: 'firstname lastname email',
+        options: { lean: true },
+      })
+      .sort({ createdAt: -1 });
+
+    // Replace missing references with default values
+    transactions.forEach((payment) => {
+      if (!payment.mentorId) {
+        payment.mentorId = { firstname: 'Unknown', lastname: '' };
+      }
+      if (!payment.studentId) {
+        payment.studentId = { firstname: 'Unknown', lastname: '' };
+      }
+    });
+
     res.status(200).json({ success: true, transactions });
   } catch (error) {
     console.error('Error fetching transactions:', error);

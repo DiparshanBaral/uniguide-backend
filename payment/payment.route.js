@@ -14,9 +14,6 @@ router.post("/change-payment-status", paymentController.changePaymentStatus);
 // Get Payment Status for a Connection
 router.get("/connection-status/:connectionId", protect, paymentController.getConnectionPaymentStatus);
 
-// Get All Transactions for a Specific User (Protected Route)
-router.get("/transactions/:userId", protect, paymentController.getAllTransactions);
-
 // Get Specific Transaction Details (Protected Route)
 router.get("/transaction/:payment_uuid", protect, paymentController.getTransactionDetails);
 

@@ -1,5 +1,7 @@
-// models/payment.model.js
 const mongoose = require("mongoose");
+const {Connection} = require("../models/connectionModel");
+const {Mentor} = require("../models/mentorModel");
+const {Student} = require("../models/studentModel");
 const { v4: uuidv4 } = require("uuid");
 
 const paymentSchema = new mongoose.Schema(
@@ -12,17 +14,17 @@ const paymentSchema = new mongoose.Schema(
     },
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Student",
+      ref: Student,
       required: true,
     },
     mentorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Mentor",
+      ref: Mentor,
       required: true,
     },
     connectionId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Connection",
+      ref: Connection,
       required: true,
     },
     amount: {

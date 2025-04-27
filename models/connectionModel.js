@@ -1,16 +1,18 @@
 const mongoose = require('mongoose');
+const {Mentor} = require("./mentorModel");
+const {Student} = require("./studentModel");
 
 // Connection Schema Definition
 const connectionSchema = new mongoose.Schema(
   {
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Student',
+      ref: Student,
       required: true,
     },
     mentorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Mentor',
+      ref: Mentor,
       required: true,
     },
     description: {
