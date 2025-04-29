@@ -17,7 +17,7 @@ const app = express();
 app.use(express.json());
 
 // CORS Configuration
-const allowedOrigins = ['http://localhost:5173'];
+const allowedOrigins = ['http://localhost:5173', process.env.FRONTEND_URL || 'https://uni-guide-frontend.vercel.app'];
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
