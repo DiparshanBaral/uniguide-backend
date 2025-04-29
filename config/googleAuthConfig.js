@@ -79,11 +79,26 @@ passport.use(
         } else {
           // Normal signup or login with explicit role
           let model = role === "student" ? Student : Mentor;
-          user = await model.findOneAndUpdate(
-            { email },
-            { firstname, lastname, profilePic },
-            { new: true, upsert: action === "signup" }
-          );
+          
+          if (action === "signup") {
+            // Add this marker for Google-authenticated users
+            const newUser = {
+              firstname,
+              lastname,
+              email,
+              profilePic,
+              password: '[GOOGLE_AUTH_USER]'  // Add this placeholder for Google users
+            };
+            
+            // Create the user with the model
+            user = await model.create(newUser);
+          } else {
+            user = await model.findOneAndUpdate(
+              { email },
+              { firstname, lastname, profilePic },
+              { new: true, upsert: action === "signup" }
+            );
+          }
           
           if (!user) {
             return done(null, false, { message: "User not found or invalid role." });

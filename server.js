@@ -64,6 +64,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const paymentNegotiationRoutes = require('./routes/paymentNegotiationRoutes');
 const paymentRoutes = require('./payment/payment.route'); 
 const googleAuthRoutes = require('./routes/googleAuthRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -83,7 +84,8 @@ app.use('/notifications', notificationRoutes);
 app.use('/review', reviewRoutes);
 app.use('/paymentnegotiation', paymentNegotiationRoutes);
 app.use('/auth', googleAuthRoutes);
-app.use('/payment', paymentRoutes); // Use the payment routes
+app.use('/payment', paymentRoutes);
+app.use('/auth', authRoutes);
 
 // Add this after your routes are mounted
 app.use((req, res, next) => {
