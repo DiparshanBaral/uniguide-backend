@@ -17,19 +17,38 @@ const app = express();
 app.use(express.json());
 
 // CORS Configuration
-const allowedOrigins = ['http://localhost:5173', process.env.FRONTEND_URL || 'https://uni-guide-frontend.vercel.app'];
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'https://uni-guide-frontend.vercel.app'
+];
+
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log(`Blocked by CORS: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
+
+// Apply CORS middleware BEFORE any route definitions
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Automatically handle preflight requests for all routes
+
+// Add this after your CORS configuration
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://uni-guide-frontend.vercel.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  next();
+});
+
+// Explicitly handle OPTIONS requests for all routes
+app.options('*', cors(corsOptions));
 
 // Add session middleware before your routes
 app.use(
@@ -93,15 +112,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Default route
+app.get('/', (req, res) => {
+  res.send('UNIGUIDE API is running....');
+});
+
 // Add a catch-all route to handle undefined routes
 app.use((req, res) => {
   console.error(`Route not found: ${req.method} ${req.url}`);
   res.status(404).send('Not Found');
-});
-
-// Default route
-app.get('/', (req, res) => {
-  res.send('UNIGUIDE API is running....');
 });
 
 // Create HTTP server
