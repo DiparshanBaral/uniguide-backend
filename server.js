@@ -19,7 +19,7 @@ app.use(express.json());
 // CORS Configuration
 const allowedOrigins = [
   'http://localhost:5173', 
-  'https://uni-guide-frontend.vercel.app'
+  // 'https://uni-guide-frontend.vercel.app'
 ];
 
 const corsOptions = {
@@ -41,7 +41,7 @@ app.use(cors(corsOptions));
 
 // Add this after your CORS configuration
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://uni-guide-frontend.vercel.app');
+  // res.header('Access-Control-Allow-Origin', 'https://uni-guide-frontend.vercel.app');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   next();
