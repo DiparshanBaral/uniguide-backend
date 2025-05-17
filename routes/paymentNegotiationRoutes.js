@@ -18,4 +18,7 @@ router.put('/:id/negotiate', protect, paymentNegotiationController.negotiateFee)
 // Mentor responds to negotiation
 router.put('/:id/respond', protect, paymentNegotiationController.respondToNegotiation);
 
+// Add this route
+router.get('/connection/:connectionId', protect, paymentNegotiationController.getNegotiationsByConnectionId);
+
 module.exports = router;

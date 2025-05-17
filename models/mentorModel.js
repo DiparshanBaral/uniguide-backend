@@ -27,7 +27,6 @@ const mentorSchema = new mongoose.Schema(
     profileCompleted: { type: Boolean, default: false }, // Track profile completion
     languages: [{ type: String, default: [] }], // List of languages the mentor knows
 
-    // Add this to the schema:
     googleId: { type: String },
   },
   { timestamps: true }

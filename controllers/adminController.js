@@ -71,5 +71,5 @@ const getCounts = async (req, res) => {
 
 module.exports = {
   loginAdmin,
-  getCounts, // Export the new controller
+  getCounts,
 };

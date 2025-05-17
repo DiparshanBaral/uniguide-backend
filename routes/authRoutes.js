@@ -238,32 +238,35 @@ router.post('/update-password', protect, async (req, res) => {
 });
 
 // Generate Stream token
-router.get('/stream-token', async (req, res) => {
+router.get('/stream-token', (req, res) => {
+  const { userId, userName } = req.query;
+  
+  if (!userId || !userName) {
+    return res.status(400).json({ error: 'Missing userId or userName' });
+  }
+  
   try {
-    const userId = req.query.userId; // Pass userId as a query parameter
-    const userName = req.query.userName; // Pass userName as a query parameter
-
     console.log('Generating Stream token for user:', { userId, userName });
-
-    if (!STREAM_API_SECRET) {
-      console.error('Stream API secret is missing');
-      return res.status(500).json({ error: 'Stream API secret is missing' });
-    }
-
-    // Define the payload for the token
-    const payload = {
-      user_id: userId,
-      name: userName,
-    };
-
-    // Generate the token using the Stream API secret
-    const token = jwt.sign(payload, STREAM_API_SECRET, { expiresIn: '24h' });
-
+    
+    // Force the iat to be current server time and lower than now
+    const now = Math.floor(Date.now() / 1000);
+    
+    const token = jwt.sign(
+      {
+        user_id: userId,
+        name: userName,
+        // Set iat to slightly in the past to avoid clock skew issues
+        iat: now - 10 
+      },
+      process.env.STREAM_API_SECRET,
+      { expiresIn: '24h' }
+    );
+    
     console.log('Generated Stream token:', token);
-    return res.json({ token });
+    res.status(200).json({ token });
   } catch (error) {
     console.error('Error generating Stream token:', error);
-    return res.status(500).json({ error: 'Failed to generate token' });
+    res.status(500).json({ error: 'Failed to generate token' });
   }
 });
 

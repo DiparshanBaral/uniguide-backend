@@ -2,6 +2,19 @@ const { PaymentNegotiation } = require('../models/paymentNegotiationModel');
 const Affiliation = require('../models/affiliationModel');
 const { Mentor } = require('../models/mentorModel');
 const { Notification } = require('../models/notificationModel');
+const {
+  USUniversity,
+  UKUniversity,
+  CanadaUniversity,
+  AustraliaUniversity,
+} = require('../models/universityModel');
+
+const universityModels = {
+  US: USUniversity,
+  UK: UKUniversity,
+  Canada: CanadaUniversity,
+  Australia: AustraliaUniversity,
+};
 
 // Create a payment record when mentor applies for affiliation
 const createPayment = async (req, res) => {
@@ -87,11 +100,77 @@ const getMentorNegotiations = async (req, res) => {
   }
 };
 
+// Get negotiations by connection ID
+const getNegotiationsByConnectionId = async (req, res) => {
+  try {
+    const { connectionId } = req.params;
+    const mongoose = require('mongoose');
+    
+    // Validate the connection ID format
+    if (!mongoose.Types.ObjectId.isValid(connectionId)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid connection ID format' 
+      });
+    }
+    
+    // Import the Connection model correctly using destructuring (if it's exported that way)
+    // or directly if it's the default export
+    const connectionModule = require('../models/connectionModel');
+    // Handle both export styles: module.exports = Connection or module.exports = { Connection }
+    const Connection = connectionModule.Connection || connectionModule;
+    
+    if (!Connection || typeof Connection.findById !== 'function') {
+      throw new Error('Connection model not properly imported');
+    }
+    
+    // Find the connection and populate mentorId
+    const connection = await Connection.findById(connectionId).populate('mentorId');
+    
+    if (!connection) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Connection not found' 
+      });
+    }
+    
+    // Safely handle the mentorId regardless of whether it's populated or not
+    const mentorId = connection.mentorId instanceof mongoose.Types.ObjectId 
+      ? connection.mentorId
+      : (connection.mentorId && connection.mentorId._id 
+          ? connection.mentorId._id 
+          : connection.mentorId);
+    
+    if (!mentorId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Connection does not have a valid mentor ID'
+      });
+    }
+    
+    // Find negotiations for this mentor
+    const negotiations = await PaymentNegotiation.find({ 
+      mentorId: mentorId 
+    }).sort({ createdAt: -1 });
+    
+    res.status(200).json({ 
+      success: true, 
+      negotiations: negotiations || [] 
+    });
+  } catch (error) {
+    console.error('Error fetching connection negotiations:', error);
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
+  }
+};
+
 // Admin negotiates fee
 const negotiateFee = async (req, res) => {
   try {
     const { id } = req.params;
-    const { negotiatedConsultationFee, message } = req.body;
+    const { negotiatedConsultationFee, message, isApproval } = req.body;
     
     if (!negotiatedConsultationFee || isNaN(parseFloat(negotiatedConsultationFee)) || parseFloat(negotiatedConsultationFee) <= 0) {
       return res.status(400).json({ error: 'Valid negotiated fee is required' });
@@ -102,36 +181,95 @@ const negotiateFee = async (req, res) => {
       return res.status(404).json({ error: 'Payment negotiation not found' });
     }
     
-    negotiation.negotiatedConsultationFee = parseFloat(negotiatedConsultationFee);
-    negotiation.status = 'admin_approved';
-    
-    // Add to negotiation history
-    negotiation.negotiationHistory.push({
-      proposedBy: 'admin',
-      amount: parseFloat(negotiatedConsultationFee),
-      message: message || 'Admin fee negotiation',
-      timestamp: new Date()
-    });
+    // If the admin is approving a counter offer from the mentor
+    if (isApproval) {
+      // Set the final consultation fee and status to approved
+      negotiation.finalConsultationFee = parseFloat(negotiatedConsultationFee);
+      negotiation.status = 'mentor_approved'; // Same status as when mentor accepts
+      
+      // Add to negotiation history
+      negotiation.negotiationHistory.push({
+        proposedBy: 'admin',
+        amount: parseFloat(negotiatedConsultationFee),
+        message: message || 'Admin accepted counter offer',
+        timestamp: new Date()
+      });
+      
+      // Update the affiliation status to Approved
+      const affiliation = await Affiliation.findById(negotiation.affiliationId);
+      if (affiliation && affiliation.status !== 'Approved') {
+        affiliation.status = 'Approved';
+        
+        // Get university information
+        const UniversityModel = universityModels[affiliation.universityLocation];
+        if (UniversityModel) {
+          const university = await UniversityModel.findById(affiliation.universityId);
+          if (university) {
+            // Update mentor with university name and negotiated fee
+            await Mentor.findByIdAndUpdate(
+              negotiation.mentorId,
+              {
+                university: university.name,
+                isApproved: true,
+                consultationFee: negotiation.finalConsultationFee,
+                currency: negotiation.currency
+              }
+            );
+            
+            // Add mentor to university's affiliatedMentors array if not already there
+            if (!university.affiliatedMentors.includes(negotiation.mentorId)) {
+              university.affiliatedMentors.push(negotiation.mentorId);
+              await university.save();
+            }
+            
+            // Create notification for mentor
+            const notification = new Notification({
+              userId: negotiation.mentorId,
+              userRole: 'Mentor',
+              title: 'Affiliation Approved',
+              description: `Your affiliation with ${university.name} has been approved with a consultation fee of ${negotiation.finalConsultationFee} ${negotiation.currency}.`,
+              link: '/payments',
+            });
+            
+            await notification.save();
+          }
+        }
+        
+        await affiliation.save();
+      }
+    } else {
+      // This is a regular negotiation (initial or counter to mentor's counter)
+      negotiation.negotiatedConsultationFee = parseFloat(negotiatedConsultationFee);
+      negotiation.status = 'admin_approved';
+      
+      // Add to negotiation history
+      negotiation.negotiationHistory.push({
+        proposedBy: 'admin',
+        amount: parseFloat(negotiatedConsultationFee),
+        message: message || 'Admin fee negotiation',
+        timestamp: new Date()
+      });
+      
+      // Create notification for mentor
+      const affiliation = await Affiliation.findById(negotiation.affiliationId);
+      if (affiliation) {
+        const notification = new Notification({
+          userId: negotiation.mentorId,
+          userRole: 'Mentor',
+          title: 'New Fee Negotiation',
+          description: `Admin has proposed a consultation fee of ${negotiatedConsultationFee} ${negotiation.currency}. Please review.`,
+          link: '/payments',
+        });
+        
+        await notification.save();
+      }
+    }
     
     await negotiation.save();
     
-    // Create notification for mentor
-    const affiliation = await Affiliation.findById(negotiation.affiliationId);
-    if (affiliation) {
-      const notification = new Notification({
-        userId: negotiation.mentorId,
-        userRole: 'Mentor',
-        title: 'New Fee Negotiation',
-        description: `Admin has proposed a consultation fee of ${negotiatedConsultationFee} ${negotiation.currency}. Please review.`,
-        link: '/payments',
-      });
-      
-      await notification.save();
-    }
-    
     res.status(200).json({ 
       success: true, 
-      message: 'Fee negotiation submitted successfully',
+      message: isApproval ? 'Counter offer accepted successfully' : 'Fee negotiation submitted successfully',
       negotiation 
     });
   } catch (error) {
@@ -171,10 +309,44 @@ const respondToNegotiation = async (req, res) => {
       const affiliation = await Affiliation.findById(negotiation.affiliationId);
       if (affiliation && affiliation.status !== 'Approved') {
         affiliation.status = 'Approved';
+        
+        // Get university information
+        const UniversityModel = universityModels[affiliation.universityLocation];
+        if (UniversityModel) {
+          const university = await UniversityModel.findById(affiliation.universityId);
+          if (university) {
+            // Update mentor with university name and negotiated fee
+            await Mentor.findByIdAndUpdate(
+              negotiation.mentorId,
+              {
+                university: university.name,
+                isApproved: true,
+                consultationFee: negotiation.finalConsultationFee,
+                currency: negotiation.currency
+              }
+            );
+            
+            // Add mentor to university's affiliatedMentors array if not already there
+            if (!university.affiliatedMentors.includes(negotiation.mentorId)) {
+              university.affiliatedMentors.push(negotiation.mentorId);
+              await university.save();
+            }
+            
+            // Create notification for mentor
+            const notification = new Notification({
+              userId: negotiation.mentorId,
+              userRole: 'Mentor',
+              title: 'Affiliation Approved',
+              description: `Your affiliation with ${university.name} has been approved with a consultation fee of ${negotiation.finalConsultationFee} ${negotiation.currency}.`,
+              link: '/payments',
+            });
+            
+            await notification.save();
+          }
+        }
+        
         await affiliation.save();
       }
-      
-      
     } else if (response === 'reject') {
       // Mentor rejects the negotiation
       negotiation.status = 'rejected';
@@ -227,6 +399,7 @@ module.exports = {
   createPayment,
   getNegotiationById,
   getMentorNegotiations,
+  getNegotiationsByConnectionId,
   negotiateFee,
   respondToNegotiation,
 };

@@ -31,6 +31,14 @@ const paymentSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    mentorPayment: {
+      type: Number,
+      required: true,
+    },
+    adminPayment: {
+      type: Number,
+      required: true,
+    },
     currency: {
       type: String,
       required: true,
@@ -47,6 +55,10 @@ const paymentSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
+    },
+    mentorPaid: {
+      type: Boolean,
+      default: false,
     },
     createdAt: {
       type: Date,

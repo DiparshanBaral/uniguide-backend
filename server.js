@@ -12,6 +12,22 @@ const passport = require('./config/googleAuthConfig');
 // Connect to MongoDB
 connectDB();
 
+// Function to validate server time
+function validateServerTime() {
+  const serverTime = new Date();
+  console.log('Server time:', serverTime.toISOString());
+  
+  // Check if year is reasonable (2023-2024)
+  const year = serverTime.getFullYear();
+  if (year < 2023 || year > 2024) {
+    console.error(`⚠️ SERVER CLOCK ERROR: Year is set to ${year} instead of 2023-2024!`);
+    console.error('This will cause JWT token validation issues!');
+  }
+}
+
+// Call this when your server starts
+validateServerTime();
+
 const app = express();
 
 // Middleware for parsing JSON
@@ -86,6 +102,7 @@ const paymentNegotiationRoutes = require('./routes/paymentNegotiationRoutes');
 const paymentRoutes = require('./payment/payment.route');
 const googleAuthRoutes = require('./routes/googleAuthRoutes');
 const authRoutes = require('./routes/authRoutes');
+const walletRoutes = require('./routes/walletRoutes');
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -107,6 +124,7 @@ app.use('/paymentnegotiation', paymentNegotiationRoutes);
 app.use('/auth', googleAuthRoutes);
 app.use('/payment', paymentRoutes);
 app.use('/auth', authRoutes);
+app.use('/wallet', walletRoutes);
 
 // Request logging middleware
 app.use((req, res, next) => {

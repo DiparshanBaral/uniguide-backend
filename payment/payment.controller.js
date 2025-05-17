@@ -4,6 +4,11 @@ const { Connection } = require('../models/connectionModel');
 const { Mentor } = require('../models/mentorModel');
 const { PaymentNegotiation } = require('../models/paymentNegotiationModel');
 const { v4: uuidv4 } = require('uuid');
+const Wallet = require('../models/walletModel');
+
+// Constants
+const MENTOR_SPLIT_PERCENTAGE = 80;
+const ADMIN_SPLIT_PERCENTAGE = 20;
 
 // Normalize currency code mapping
 const normalizeCurrencyCode = (code) => {
@@ -15,6 +20,17 @@ const normalizeCurrencyCode = (code) => {
   };
   const lowercaseCode = (code || '').toLowerCase();
   return currencyMap[lowercaseCode] || lowercaseCode;
+};
+
+// Calculate payment splits
+const calculatePaymentSplits = (totalAmount) => {
+  const mentorPayment = (totalAmount * MENTOR_SPLIT_PERCENTAGE) / 100;
+  const adminPayment = (totalAmount * ADMIN_SPLIT_PERCENTAGE) / 100;
+  
+  return {
+    mentorPayment: parseFloat(mentorPayment.toFixed(2)),
+    adminPayment: parseFloat(adminPayment.toFixed(2))
+  };
 };
 
 // Create a Payment Intent
@@ -83,6 +99,11 @@ const createPaymentIntent = async (req, res) => {
       return res.status(400).json({ error: 'Invalid currency' });
     }
 
+    // Calculate payment splits (80% mentor, 20% admin)
+    const { mentorPayment, adminPayment } = calculatePaymentSplits(amount);
+    
+    console.log(`Payment split: Mentor: ${mentorPayment} (${MENTOR_SPLIT_PERCENTAGE}%), Admin: ${adminPayment} (${ADMIN_SPLIT_PERCENTAGE}%)`);
+
     // Create a Payment Intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
@@ -97,6 +118,8 @@ const createPaymentIntent = async (req, res) => {
       mentorId: connection.mentorId._id,
       connectionId: connection._id,
       amount,
+      mentorPayment,
+      adminPayment,
       currency: currencyCode,
       paymentIntentId: paymentIntent.id,
       paymentMethod: 'card',
@@ -132,10 +155,78 @@ const changePaymentStatus = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.retrieve(payment.paymentIntentId);
 
     if (paymentIntent.status === 'succeeded') {
+      // Update payment status
       payment.paymentStatus = 'paid';
+      
+      // Find or create mentor wallet
+      let mentorWallet = await Wallet.findOne({ 
+        userId: payment.mentorId, 
+        userType: 'Mentor'
+      });
+      
+      if (!mentorWallet) {
+        mentorWallet = new Wallet({
+          userId: payment.mentorId,
+          userType: 'Mentor',
+          balance: 0,
+          currency: payment.currency
+        });
+      }
+      
+      // Add the mentor's payment to their wallet
+      mentorWallet.balance += payment.mentorPayment;
+      
+      // Add transaction record
+      mentorWallet.transactions.push({
+        amount: payment.mentorPayment,
+        type: 'deposit',
+        paymentId: payment._id,
+      });
+      
+      // Save mentor wallet
+      await mentorWallet.save();
+      
+      // Find or create admin wallet
+      const adminId = "67b1a5f12167e10a7e2c2f89";
+      
+      let adminWallet = await Wallet.findOne({
+        userId: adminId,
+        userType: 'Admin'
+      });
+      
+      if (!adminWallet) {
+        adminWallet = new Wallet({
+          userId: adminId,
+          userType: 'Admin',
+          balance: 0,
+          currency: payment.currency
+        });
+      }
+      
+      // Add the admin's payment to their wallet
+      adminWallet.balance += payment.adminPayment;
+      
+      // Add transaction record
+      adminWallet.transactions.push({
+        amount: payment.adminPayment,
+        type: 'deposit',
+        paymentId: payment._id,
+      });
+      
+      // Save admin wallet
+      await adminWallet.save();
+      
+      // Mark that the mentor has been paid
+      payment.mentorPaid = true;
+      
+      // Save the payment
       await payment.save();
 
-      return res.status(200).json({ message: 'Payment status updated successfully' });
+      return res.status(200).json({ 
+        message: 'Payment status updated successfully',
+        mentorPayment: payment.mentorPayment,
+        adminPayment: payment.adminPayment
+      });
     } else {
       return res.status(400).json({ error: 'Payment not completed' });
     }

@@ -32,7 +32,7 @@ const paymentNegotiationSchema = new mongoose.Schema({
   currency: {
     type: String,
     required: true,
-    enum: ['USD', 'GBP', 'EUR', 'CAD', 'AUD', 'NRS']
+    enum: ['USD', 'GBP', 'EUR', 'CAD', 'AUD', 'NRS', 'NPR']
   },
   status: {
     type: String,
@@ -66,14 +66,21 @@ paymentNegotiationSchema.pre('save', function(next) {
   // Normalize the currency code
   if (this.currency) {
     const currencyMap = {
-      'nrs': 'npr',
-      'rs': 'inr',
-      'rupee': 'inr',
-      'rupees': 'inr'
+      'nrs': 'NPR',
+      'rs': 'NPR',
+      'rupee': 'NPR',
+      'rupees': 'NPR',
+      'usd': 'USD',
+      'gbp': 'GBP',
+      'eur': 'EUR',
+      'cad': 'CAD',
+      'aud': 'AUD',
+      'npr': 'NPR'
     };
     
     const normalized = (this.currency || '').toLowerCase();
-    this.currency = currencyMap[normalized] || normalized;
+    // Convert to uppercase after mapping
+    this.currency = currencyMap[normalized] || normalized.toUpperCase();
   }
   
   next();
