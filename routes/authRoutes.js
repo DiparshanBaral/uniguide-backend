@@ -4,6 +4,12 @@ const { Student } = require('../models/studentModel');
 const { Mentor } = require('../models/mentorModel');
 const { generateOTP, verifyOTP, sendOTPEmail } = require('../utils/otpUtil');
 const { protect } = require('../middleware/authMiddleware');
+const { createToken } = require('@stream-io/video-client');
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken
+
+// Replace with your actual Stream API key and secret
+const STREAM_API_KEY = process.env.STREAM_API_KEY;
+const STREAM_API_SECRET = process.env.STREAM_API_SECRET;
 
 const router = express.Router();
 
@@ -228,6 +234,36 @@ router.post('/update-password', protect, async (req, res) => {
   } catch (error) {
     console.error('Error updating password:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Generate Stream token
+router.get('/stream-token', async (req, res) => {
+  try {
+    const userId = req.query.userId; // Pass userId as a query parameter
+    const userName = req.query.userName; // Pass userName as a query parameter
+
+    console.log('Generating Stream token for user:', { userId, userName });
+
+    if (!STREAM_API_SECRET) {
+      console.error('Stream API secret is missing');
+      return res.status(500).json({ error: 'Stream API secret is missing' });
+    }
+
+    // Define the payload for the token
+    const payload = {
+      user_id: userId,
+      name: userName,
+    };
+
+    // Generate the token using the Stream API secret
+    const token = jwt.sign(payload, STREAM_API_SECRET, { expiresIn: '24h' });
+
+    console.log('Generated Stream token:', token);
+    return res.json({ token });
+  } catch (error) {
+    console.error('Error generating Stream token:', error);
+    return res.status(500).json({ error: 'Failed to generate token' });
   }
 });
 

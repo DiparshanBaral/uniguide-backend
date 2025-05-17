@@ -1,9 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const http = require('http'); // Required for integrating Socket.IO
+const http = require('http');
 const mongoose = require('mongoose');
-const { Server } = require('socket.io'); // Use Socket.IO
+const { Server } = require('socket.io');
+const { ExpressPeerServer } = require('peer');
 const connectDB = require('./config/db');
 const session = require('express-session');
 const passport = require('./config/googleAuthConfig');
@@ -14,11 +15,12 @@ connectDB();
 const app = express();
 
 // Middleware for parsing JSON
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // Increased limit for media data
 
 // CORS Configuration
 const allowedOrigins = [
-  'http://localhost:5173', 
+  'http://localhost:5173',
+  // Add other origins as needed
   // 'https://uni-guide-frontend.vercel.app'
 ];
 
@@ -33,30 +35,30 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'],
 };
 
-// Apply CORS middleware BEFORE any route definitions
+// Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Add this after your CORS configuration
+// Add additional headers for WebRTC
 app.use((req, res, next) => {
-  // res.header('Access-Control-Allow-Origin', 'https://uni-guide-frontend.vercel.app');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
   next();
 });
 
-// Explicitly handle OPTIONS requests for all routes
+// Explicitly handle OPTIONS requests
 app.options('*', cors(corsOptions));
 
-// Add session middleware before your routes
+// Add session middleware
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'uniguide_session_secret_key',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === 'production' }
+    cookie: { secure: process.env.NODE_ENV === 'production' },
   })
 );
 
@@ -81,7 +83,7 @@ const visaRoutes = require('./routes/visaRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const paymentNegotiationRoutes = require('./routes/paymentNegotiationRoutes');
-const paymentRoutes = require('./payment/payment.route'); 
+const paymentRoutes = require('./payment/payment.route');
 const googleAuthRoutes = require('./routes/googleAuthRoutes');
 const authRoutes = require('./routes/authRoutes');
 
@@ -106,7 +108,7 @@ app.use('/auth', googleAuthRoutes);
 app.use('/payment', paymentRoutes);
 app.use('/auth', authRoutes);
 
-// Add this after your routes are mounted
+// Request logging middleware
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
@@ -117,31 +119,40 @@ app.get('/', (req, res) => {
   res.send('UNIGUIDE API is running....');
 });
 
-// Add a catch-all route to handle undefined routes
-app.use((req, res) => {
-  console.error(`Route not found: ${req.method} ${req.url}`);
-  res.status(404).send('Not Found');
-});
-
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO server
+// Initialize Socket.IO
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
   },
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000,
+  pingInterval: 20000,
+  allowEIO3: true,
+  maxHttpBufferSize: 5e6, // 5MB - needed for larger signaling data
 });
 
 // Store active connections
 const clients = new Map();
 
-// Handle Socket.IO connections
+// Helper function to find a socket by user ID
+function getSocketByUserId(userId) {
+  const client = clients.get(userId);
+  if (!client || !client.socket) {
+    console.error(`No active client found for user ID: ${userId}`);
+    return null;
+  }
+  return client.socket;
+}
+
+// Socket.IO connection handler
 io.on('connection', async (socket) => {
   try {
-    // Extract userId and userRole from query parameters
     const { userId, userRole } = socket.handshake.query;
 
     // Validate connection parameters
@@ -151,95 +162,90 @@ io.on('connection', async (socket) => {
       return;
     }
 
-    let userModel;
-    // Determine the appropriate model based on userRole
-    if (userRole === 'Student') {
-      userModel = require('./models/studentModel').Student;
-    } else if (userRole === 'Mentor') {
-      userModel = require('./models/mentorModel').Mentor;
-    } else {
-      console.error(`Invalid user role: ${userRole}`);
-      socket.disconnect(true);
-      return;
-    }
-
-    // Validate user existence in the database
-    const user = await userModel.findById(userId);
-    if (!user) {
-      console.error(`User not found: userId=${userId}`);
-      socket.disconnect(true);
-      return;
-    }
-
     // Store the Socket.IO connection with user details
-    clients.set(userId, { socket, role: userRole });
-    console.log(`User connected: ${userId} (${userRole})`);
+    clients.set(userId, {
+      socket,
+      role: userRole,
+      connectedAt: new Date(),
+    });
+    console.log(`User connected: ${userId} (${userRole}), socket ID: ${socket.id}`);
 
     // Handle incoming messages
-    // Handle incoming messages via Socket.IO
     socket.on('sendMessage', async (data) => {
-      const { receiverId, receiverRole, content } = data;
-
-      // Validate message format
-      if (!receiverId || !receiverRole || !content) {
-        console.error('Invalid message format:', data);
-        socket.emit('error', { error: 'Invalid message format' });
-        return;
-      }
-
-      // Check if the message already exists in the database
-      const Chat = require('./models/chatModel').Chat;
-      const existingMessage = await Chat.findOne({
-        senderId: userId,
-        senderRole: userRole,
-        receiverId,
-        receiverRole,
-        message: content,
-      });
-
-      if (existingMessage) {
-        console.warn('Duplicate message detected:', content);
-        return; // Avoid saving duplicates
-      }
-
-      // Save the message to the database
-      const newMessage = new Chat({
-        senderId: userId,
-        senderRole: userRole,
-        receiverId,
-        receiverRole,
-        message: content,
-      });
-
       try {
-        await newMessage.save();
-      } catch (error) {
-        console.error('Error saving message to database:', error);
-        socket.emit('error', { error: 'Failed to save message' });
-        return;
-      }
-
-      // Send the message to the receiver if they are online
-      const receiver = clients.get(receiverId);
-      if (receiver) {
-        receiver.socket.emit('receiveMessage', {
-          _id: newMessage._id, // Include the unique ID of the message
+        const { receiverId, receiverRole, content } = data;
+        
+        // Validate message format
+        if (!receiverId || !receiverRole || !content) {
+          console.error('Invalid message format:', data);
+          socket.emit('error', { error: 'Invalid message format' });
+          return;
+        }
+        
+        // Check if the message already exists in the database
+        const Chat = require('./models/chatModel').Chat;
+        const existingMessage = await Chat.findOne({
           senderId: userId,
           senderRole: userRole,
-          content,
+          receiverId,
+          receiverRole,
+          message: content,
         });
+        
+        if (existingMessage) {
+          console.warn('Duplicate message detected:', content);
+          return; // Avoid saving duplicates
+        }
+        
+        // Save the message to the database
+        const newMessage = new Chat({
+          senderId: userId,
+          senderRole: userRole,
+          receiverId,
+          receiverRole,
+          message: content,
+        });
+        
+        await newMessage.save();
+        
+        // Send the message to the receiver if they are online
+        const receiver = clients.get(receiverId);
+        if (receiver && receiver.socket) {
+          receiver.socket.emit('receiveMessage', {
+            _id: newMessage._id,
+            senderId: userId,
+            senderRole: userRole,
+            content,
+          });
+        }
+      } catch (error) {
+        console.error('Error in sendMessage handler:', error);
+        socket.emit('error', { error: 'Server error processing message' });
       }
     });
 
     // Handle disconnection
     socket.on('disconnect', () => {
-      console.log(`User disconnected: ${userId} (${userRole})`);
+      console.log(`User disconnected: ${userId} (${userRole}), socket ID: ${socket.id}`);
       clients.delete(userId);
     });
+
+    // Send initial connection success confirmation
+    socket.emit('connection-success', {
+      userId: userId,
+      socketId: socket.id,
+      timestamp: Date.now(),
+    });
   } catch (error) {
-    console.error('Error validating Socket.IO connection:', error);
+    console.error('Error in Socket.IO connection handler:', error);
     socket.disconnect(true);
   }
+});
+
+// Add a catch-all route to handle undefined routes
+app.use((req, res) => {
+  console.error(`Route not found: ${req.method} ${req.url}`);
+  res.status(404).send('Not Found');
 });
 
 // Start Server
