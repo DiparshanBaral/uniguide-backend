@@ -20,7 +20,7 @@ function validateServerTime() {
   // Check if year is reasonable (2023-2024)
   const year = serverTime.getFullYear();
   if (year < 2023 || year > 2024) {
-    console.error(`⚠️ SERVER CLOCK ERROR: Year is set to ${year} instead of 2023-2024!`);
+    console.error(`SERVER CLOCK ERROR: Year is set to ${year} instead of 2023-2024!`);
     console.error('This will cause JWT token validation issues!');
   }
 }
