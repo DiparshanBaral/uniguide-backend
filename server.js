@@ -102,6 +102,7 @@ const paymentRoutes = require('./payment/payment.route');
 const googleAuthRoutes = require('./routes/googleAuthRoutes');
 const authRoutes = require('./routes/authRoutes');
 const walletRoutes = require('./routes/walletRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 // Use routes
 app.use('/student', studentRoutes);
@@ -124,6 +125,7 @@ app.use('/auth', googleAuthRoutes);
 app.use('/payment', paymentRoutes);
 app.use('/auth', authRoutes);
 app.use('/wallet', walletRoutes);
+app.use('/contact', contactRoutes);
 
 // Request logging middleware
 app.use((req, res, next) => {
