@@ -36,7 +36,7 @@ app.use(express.json({ limit: '50mb' }));
 // CORS Configuration
 const allowedOrigins = [
   'http://localhost:5173',
-  // 'https://uni-guide-frontend.vercel.app'
+  'https://uni-guide-frontend.vercel.app'
 ];
 
 const corsOptions = {
