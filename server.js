@@ -9,6 +9,45 @@ const connectDB = require('./config/db');
 const session = require('express-session');
 const passport = require('./config/googleAuthConfig');
 
+const app = express();
+
+// CORS Configuration - MOVE THIS UP BEFORE ANY OTHER MIDDLEWARE
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://uni-guide-frontend.vercel.app',
+  'https://uni-guide-frontend-git-main-diparshanbarals-projects.vercel.app',
+  'https://uniguide-backend-git-main-diparshanbarals-projects.vercel.app',
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log(`Blocked by CORS: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'],
+};
+
+// Apply CORS middleware FIRST
+app.use(cors(corsOptions));
+
+// Explicitly handle OPTIONS requests
+app.options('*', cors(corsOptions));
+
+// Add a simpler CORS header for all responses as a backup
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 // Connect to MongoDB
 connectDB();
 
@@ -28,46 +67,8 @@ function validateServerTime() {
 // Call this when your server starts
 validateServerTime();
 
-const app = express();
-
 // Middleware for parsing JSON
 app.use(express.json({ limit: '50mb' }));
-
-// CORS Configuration
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://uni-guide-frontend.vercel.app',
-  'https://uni-guide-frontend-git-main-diparshanbarals-projects.vercel.app',
-  'https://uniguide-backend-git-main-diparshanbarals-projects.vercel.app',
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log(`Blocked by CORS: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With'],
-};
-
-// Apply CORS middleware
-app.use(cors(corsOptions));
-
-// Add additional headers for WebRTC
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
-
-// Explicitly handle OPTIONS requests
-app.options('*', cors(corsOptions));
 
 // Add session middleware
 app.use(
