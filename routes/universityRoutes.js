@@ -12,7 +12,7 @@ const router = express.Router();
 const { uploadUniversityImage } = require('../config/cloudinaryConfig');
 
 // Route to add a new university
-router.post('/add', addUniversity);
+router.post('/add', uploadUniversityImage.single('image'), addUniversity);
 
 // Route to get a university by ID (supports US, UK, Canada, Australia)
 router.get('/:country/:id', getUniversityById);

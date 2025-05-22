@@ -9,34 +9,51 @@ const addUniversity = async (req, res) => {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-
   try {
     let university;
+    
+    // Fix: Use lowercase for country comparison
+    const countryLower = country.toLowerCase();
 
     // Ensure the correct schema is being selected based on the country
-    switch (country.toLowerCase()) {
-      case 'US':
+    switch (countryLower) {
+      case 'us':
         university = new USUniversity({
-          country, name, location, ranking, coursesOffered, contact, website, description, tuitionFee, acceptanceRate, graduationRate
+          country: 'US', // Store the standardized country code
+          name, location, ranking, coursesOffered, contact, website, description, 
+          tuitionFee, acceptanceRate, graduationRate
         });
         break;
-      case 'UK':
+      case 'uk':
         university = new UKUniversity({
-          country, name, location, ranking, coursesOffered, contact, website, description, tuitionFee, acceptanceRate, graduationRate
+          country: 'UK',
+          name, location, ranking, coursesOffered, contact, website, description, 
+          tuitionFee, acceptanceRate, graduationRate
         });
         break;
-      case 'Canada':
+      case 'canada':
         university = new CanadaUniversity({
-          country, name, location, ranking, coursesOffered, contact, website, description, tuitionFee, acceptanceRate, graduationRate
+          country: 'Canada',
+          name, location, ranking, coursesOffered, contact, website, description, 
+          tuitionFee, acceptanceRate, graduationRate
         });
         break;
-      case 'Australia':
+      case 'australia':
         university = new AustraliaUniversity({
-          country, name, location, ranking, coursesOffered, contact, website, description, tuitionFee, acceptanceRate, graduationRate
+          country: 'Australia',
+          name, location, ranking, coursesOffered, contact, website, description, 
+          tuitionFee, acceptanceRate, graduationRate
         });
         break;
       default:
-        return res.status(400).json({ message: 'Invalid country' });
+        return res.status(400).json({ 
+          message: 'Invalid country. Please use: us, uk, canada, or australia' 
+        });
+    }
+
+    // Add image URL if a file was uploaded
+    if (req.file) {
+      university.image = req.file.path;
     }
 
     // Save the university to the database
@@ -44,7 +61,7 @@ const addUniversity = async (req, res) => {
     res.status(201).json(savedUniversity);
   } catch (error) {
     console.error('Error adding university:', error);
-    res.status(500).json({ message: 'Error adding university' });
+    res.status(500).json({ message: 'Error adding university', error: error.message });
   }
 };
 
