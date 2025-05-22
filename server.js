@@ -37,7 +37,8 @@ app.use(express.json({ limit: '50mb' }));
 const allowedOrigins = [
   'http://localhost:5173',
   'https://uni-guide-frontend.vercel.app',
-  'https://uni-guide-frontend-git-main-diparshanbarals-projects.vercel.app'
+  'https://uni-guide-frontend-git-main-diparshanbarals-projects.vercel.app',
+  'https://uniguide-backend-git-main-diparshanbarals-projects.vercel.app',
 ];
 
 const corsOptions = {
