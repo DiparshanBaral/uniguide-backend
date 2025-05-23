@@ -9,9 +9,8 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      // Update this line to match the route in googleAuthRoutes.js
-      // callbackURL: 'http://localhost:5000/auth/google/callback',
-      callbackURL: 'https://uni-guide-frontend-git-main-diparshanbarals-projects.vercel.app/auth/google/callback',
+      callbackURL: 'http://localhost:5000/auth/google/callback',
+      // callbackURL: 'https://uni-guide-frontend-git-main-diparshanbarals-projects.vercel.app/auth/google/callback',
       passReqToCallback: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
