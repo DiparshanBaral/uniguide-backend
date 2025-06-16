@@ -11,7 +11,7 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Create a new message
+    // Create a new message yoooo
     const newMessage = new Chat({
       senderId,
       senderRole,
