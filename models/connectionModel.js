@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const {Mentor} = require("./mentorModel");
 const {Student} = require("./studentModel");
 
-// Connection Schema Definition
+// Connection Schema Definition sup
 const connectionSchema = new mongoose.Schema(
   {
     studentId: {
