@@ -3,7 +3,7 @@ const {Mentor} = require("./mentorModel");
 const {Student} = require("./studentModel");
 
 // Connection Schema Definition sup
-// yo yo yo yo
+// yo yo yo yo yo
 const connectionSchema = new mongoose.Schema(
   {
     studentId: {
